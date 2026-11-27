@@ -1394,8 +1394,9 @@ async function callMistral(key, userContent) {
   return data.choices[0].message.content;
 }
 
-async function callGemini(key, userContent) {
-  const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+const GEMINI_MODEL = "gemini-3.8-flash";
+async function geminiRequest(model, key, userContent) {
+  return fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({
@@ -1404,6 +1405,22 @@ async function callGemini(key, userContent) {
       generationConfig: { temperature: 0.3 }
     })
   });
+}
+async function callGemini(key, userContent) {
+  let model = GEMINI_MODEL;
+  let res = await geminiRequest(model, key, userContent);
+  if (res.status === 404) {
+    const err404 = await res.text();
+    const suggested = ((err404.match(/use models\/([A-Za-z0-9.\-]+)/) || [])[1] || "").replace(/\.+$/, "");
+    const all = (err404.match(/models\/([A-Za-z0-9.\-]+)/g) || []).map(s => s.slice(7).replace(/\.+$/, ""));
+    const newer = (suggested && suggested !== model) ? suggested : all.find(mn => mn && mn !== model);
+    if (newer) {
+      model = newer;
+      res = await geminiRequest(model, key, userContent);
+    } else {
+      throw new Error("HTTP 404 — النموذج غير متوفر حاليًا: " + err404.slice(0, 140));
+    }
+  }
   if (!res.ok) {
     const errText = await res.text();
     let hint = errText.slice(0, 140);
