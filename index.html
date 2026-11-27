@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>خُلاصة — أدوات الدراسة واستخراج الفوائد</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --bg: #f6f4ef;
@@ -42,7 +41,7 @@
     justify-content: center;
   }
   nav.tabs button {
-    flex: 1; min-width: 140px;
+    flex: 1; min-width: 120px;
     border: none; background: transparent; cursor: pointer;
     font: inherit; font-weight: 600; color: var(--muted);
     padding: 10px 14px; border-radius: 10px; transition: .2s;
@@ -106,10 +105,38 @@
     border: 2px dashed var(--accent); border-radius: var(--radius);
     background: var(--accent-soft); padding: 18px; text-align: center; margin-top: 10px;
   }
-  .upload-box input[type="file"] { margin-top: 8px; font: inherit; }
+  .upload-box input[type="file"] { margin-top: 8px; font: inherit; max-width: 100%; }
   .file-info { color: var(--muted); font-size: .85rem; margin-top: 8px; min-height: 1.4em; }
   .pg-range { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px; }
   .pg-range > div { flex: 1; min-width: 120px; }
+  .pg-modes { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; text-align: right; justify-content: center; }
+  .mode-opt {
+    display: flex; align-items: center; gap: 6px; font-weight: 600;
+    font-size: .88rem; margin: 0; cursor: pointer;
+  }
+  .mode-opt input { width: auto; accent-color: var(--accent); }
+  .pbar { background: #dcece6; border-radius: 10px; height: 14px; overflow: hidden; margin-top: 14px; }
+  .pbar > div { background: var(--accent); height: 100%; width: 0%; transition: width .3s; border-radius: 10px; }
+  .ptext { color: var(--accent); font-weight: 600; font-size: .85rem; margin-top: 4px; }
+  .ok {
+    background: var(--accent-soft); border: 1.5px solid #bfe0d5; color: var(--accent);
+    border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: .9rem; font-weight: 600;
+  }
+  .warn {
+    background: #fdf3f2; border: 1.5px solid #eac8c4; color: #8e3a30;
+    border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: .9rem;
+  }
+  .book-item { border: 1.5px solid var(--line); border-radius: 12px; padding: 14px; margin-top: 12px; background: #fbfaf7; }
+  .book-item h3 { font-size: 1rem; margin-bottom: 2px; }
+  .book-item .meta { color: var(--muted); font-size: .82rem; }
+  .book-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .book-actions .btn { margin-top: 0; }
+  .ch-item {
+    display: flex; gap: 8px; align-items: center; padding: 6px 8px;
+    border-bottom: 1px dashed var(--line); font-size: .88rem; text-align: right;
+  }
+  .ch-item input { width: auto; accent-color: var(--accent); }
+  .ch-item .len { color: var(--muted); font-size: .78rem; margin-inline-start: auto; white-space: nowrap; }
   .progress {
     background: var(--accent-soft); border-radius: 10px; padding: 12px 16px;
     margin-top: 14px; font-weight: 600; color: var(--accent);
@@ -139,10 +166,19 @@
     text-align: center; color: var(--muted); font-size: .85rem;
     padding: 20px; border-top: 1px solid var(--line);
   }
+  @media (max-width: 640px) {
+    header { padding: 30px 14px 80px; }
+    header h1 { font-size: 1.5rem; }
+    .card { padding: 16px; }
+    .btn { width: 100%; }
+    .btn.small { width: auto; }
+    .pg-range > div { min-width: 100%; }
+    .pg-modes { flex-direction: column; align-items: flex-start; gap: 6px; }
+  }
   @media print {
     header, nav.tabs, footer, .no-print { display: none !important; }
     body { background: #fff; }
-    .card { box-shadow: none; border: 1px solid #ddd; }
+    .card { box-shadow: none; border: 1px #ddd solid; }
   }
 </style>
 </head>
@@ -159,46 +195,104 @@
     <button data-tab="summary" class="active">📝 خلاصة الكتاب</button>
     <button data-tab="cards">🎴 بطاقات المراجعة</button>
     <button data-tab="library">📚 مكتبتي</button>
+    <button data-tab="books">📖 كتبتي</button>
   </nav>
 
   <!-- ============ كناشة الفوائد ============ -->
   <section id="tab-extractor">
     <div class="card">
       <h2>كناشة الفوائد</h2>
-      <p class="hint">ارفع ملف الكتاب (PDF أو TXT)، حدّد نطاق الصفحات، والكناشة تقرأه وتستخرج أكبر قدر ممكن من الفوائد الكاملة.</p>
+      <p class="hint">ارفع كتابًا بصيغة PDF أو Word أو EPUB أو TXT، حدّد الصفحات أو الفصول، وستقرؤه الكناشة وتستخرج أكبر قدر ممكن من الفوائد الكاملة. تتم كل المعالجة في متصفحك ولا يُرفع الكتاب إلى أي خدمة خارجية.</p>
 
       <label>1) ارفع ملف الكتاب</label>
       <div class="upload-box">
-        <div>📗 اختر ملف PDF أو TXT من جهازك</div>
-        <input type="file" id="book-file" accept=".pdf,.txt">
+        <div>📚 اختر ملف PDF أو DOCX (Word) أو EPUB أو TXT من جهازك</div>
+        <input type="file" id="book-file" accept=".pdf,.docx,.epub,.txt">
         <p class="file-info" id="file-info">لم يتم اختيار ملف بعد</p>
-        <div class="pg-range" id="pg-range" style="display:none;">
-          <div>
-            <label for="pg-from">من صفحة</label>
-            <input type="number" id="pg-from" value="1" min="1">
+
+        <div id="source-select" style="display:none;">
+          <div id="pg-select-area">
+            <div class="pg-modes" id="pg-modes">
+              <label class="mode-opt"><input type="radio" name="pgmode" value="all" checked> الكتاب كاملًا</label>
+              <label class="mode-opt"><input type="radio" name="pgmode" value="one"> صفحة واحدة</label>
+              <label class="mode-opt"><input type="radio" name="pgmode" value="range"> نطاق صفحات</label>
+              <label class="mode-opt"><input type="radio" name="pgmode" value="list"> صفحات متفرقة</label>
+            </div>
+            <div id="pg-inputs" class="pg-range" style="justify-content:center;">
+              <div id="wrap-pg-one" style="display:none;">
+                <label for="pg-one">رقم الصفحة</label>
+                <input type="number" id="pg-one" value="1" min="1">
+              </div>
+              <div id="wrap-pg-from" style="display:none;">
+                <label for="pg-from">من صفحة</label>
+                <input type="number" id="pg-from" value="1" min="1">
+              </div>
+              <div id="wrap-pg-to" style="display:none;">
+                <label for="pg-to">إلى صفحة</label>
+                <input type="number" id="pg-to" value="10" min="1">
+              </div>
+              <div id="wrap-pg-list" style="display:none;">
+                <label for="pg-list">أرقام الصفحات المتفرقة</label>
+                <input type="text" id="pg-list" placeholder="مثال: 5، 12، 18، 30">
+              </div>
+            </div>
+            <p id="pg-total" class="file-info"></p>
+            <div id="ocr-box" style="display:none; margin-top:6px;">
+              <label class="mode-opt" style="justify-content:center;">
+                <input type="checkbox" id="ocr-on">
+                تشغيل التعرف الضوئي (OCR) للصفحات المصوّرة — لغة عربية «ara» افتراضيًا
+              </label>
+              <label class="mode-opt" style="justify-content:center;">
+                <input type="checkbox" id="ocr-eng">
+                إضافة الإنجليزية «eng» إلى التعرف الضوئي
+              </label>
+              <p class="warn" style="font-size:.8rem; margin:4px 0;">⚠️ قبل أول تشغيل: سيُحمّل نحو 15 ميغابايت من الإنترنت لمرة واحدة (بيانات اللغة العربية).</p>
+              <div style="text-align:center; margin-top:6px;">
+                <button class="btn secondary small" style="width:auto;" onclick="testOcrPage()">🔍 اختبار OCR على صفحة واحدة</button>
+              </div>
+              <div id="ocr-test-result" style="margin-top:6px;"></div>
+            </div>
+            <button class="btn small" style="margin-top:12px;" onclick="runExtraction()">📖 استخراج النص من الصفحات المحددة</button>
           </div>
-          <div>
-            <label for="pg-to">إلى صفحة</label>
-            <input type="number" id="pg-to" value="10" min="1">
-          </div>
-          <div style="flex:0;">
-            <button class="btn small" onclick="loadBookFile()">📖 تحميل النص</button>
+
+          <div id="chapter-select-area" style="display:none;">
+            <p style="font-weight:700; margin-top:8px;">فصول الكتاب (هذه الصيغة لا تعتمد على ترقيم صفحات ثابت):</p>
+            <div class="pg-modes">
+              <label class="mode-opt"><input type="radio" name="chmode" value="all" checked> كل الفصول</label>
+              <label class="mode-opt"><input type="radio" name="chmode" value="range"> نطاق فصول</label>
+              <label class="mode-opt"><input type="radio" name="chmode" value="pick"> فصول محددة</label>
+            </div>
+            <div id="ch-range" class="pg-range" style="display:none; justify-content:center;">
+              <div>
+                <label for="ch-from">من فصل رقم</label>
+                <input type="number" id="ch-from" value="1" min="1">
+              </div>
+              <div>
+                <label for="ch-to">إلى فصل رقم</label>
+                <input type="number" id="ch-to" value="1" min="1">
+              </div>
+            </div>
+            <div id="ch-list" style="display:none; max-height:230px; overflow:auto; margin-top:8px;"></div>
+            <button class="btn small" style="margin-top:12px;" onclick="runExtraction()">📖 استخراج النص من الفصول المحددة</button>
           </div>
         </div>
       </div>
 
-      <label for="extract-input">2) النص (يُملأ تلقائياً من الملف، أو الصق النص يدوياً)</label>
-      <textarea id="extract-input" style="min-height:140px;" placeholder="سيظهر هنا نص الصفحات المحددة بعد تحميل الملف... أو الصق أي نص تريد استخراج الفوائد منه"></textarea>
+      <label for="extract-input">2) النص المستخرج — معاينة قبل الاعتماد، ويمكنك تعديله قبل الاستخراج</label>
+      <textarea id="extract-input" style="min-height:140px;" placeholder="سيظهر هنا نص الصفحات أو الفصول المحددة بعد الاستخراج... أو الصق أي نص تريد استخراج الفوائد منه يدويًا"></textarea>
       <p id="char-count" style="color:var(--muted);font-size:.8rem;margin-top:4px;">0 حرف</p>
 
       <details style="margin-top:12px;">
         <summary style="cursor:pointer;font-weight:600;color:var(--accent);">🔑 الاستخراج الذكي بالذكاء الاصطناعي (يحتاج مفتاحاً مجانياً)</summary>
         <label for="ai-key">مفتاح Mistral API (يُحفظ في متصفحك فقط)</label>
-        <input type="text" id="ai-key" placeholder="الصق مفتاحك هنا">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="password" id="ai-key" placeholder="الصق مفتاحك هنا" style="flex:1;">
+          <button type="button" class="btn secondary small" style="width:auto;" onclick="toggleKeyVisibility()">إظهار</button>
+        </div>
         <p style="color:var(--muted);font-size:.82rem;margin-top:4px;">
           احصل على مفتاح مجاني من
           <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>
-          — أنشئ حساباً، ثم API Keys ← Create new key.
+          — أنشئ حساباً، ثم API Keys ← Create new key. الكتاب نفسه لا يُرسل إلا النص المحدد إلى خدمة الذكاء الاصطناعي بموافقتك.
         </p>
         <button class="btn" onclick="extractBookAI()">🤖 استخراج شامل بالذكاء الاصطناعي</button>
       </details>
@@ -206,11 +300,22 @@
       <button class="btn secondary" onclick="extractOffline()">⚡ استخراج سريع (بدون إنترنت)</button>
 
       <div id="extract-progress"></div>
+      <button id="btn-cancel" class="btn danger no-print" style="display:none; width:auto;" onclick="cancelExtraction()">✖ إلغاء الاستخراج</button>
+      <div id="extract-preview"></div>
       <div id="extract-result"></div>
+      <div id="text-actions" style="display:none;" class="no-print">
+        <button class="btn secondary small" onclick="copyExtractedText()">📋 نسخ النص</button>
+        <button class="btn secondary small" onclick="downloadTXT()">⬇️ تنزيل TXT</button>
+        <button class="btn secondary small" onclick="downloadWord()">⬇️ تنزيل Word</button>
+        <button class="btn secondary small" onclick="downloadPDF()">🖨️ تنزيل PDF (نافذة طباعة)</button>
+      </div>
       <div id="extract-actions" style="display:none;" class="no-print">
         <button class="btn" onclick="fillSummaryFromExtraction()">📝 تحويلها إلى خلاصة محفوظة</button>
         <button class="btn secondary" onclick="makeCardsFromExtraction()">🎴 تحويل الفوائد إلى بطاقات مراجعة</button>
       </div>
+      <p id="reextract-hint" style="display:none;color:var(--muted);font-size:.82rem;margin-top:8px;">
+        💡 يمكنك تغيير الصفحات أو الفصول في الأعلى والضغط على «استخراج» مجددًا دون رفع الكتاب مرة ثانية.
+      </p>
     </div>
   </section>
 
@@ -264,7 +369,7 @@
       </div>
       <div id="benefits-list"></div>
 
-      <label for="quote-input">أضف اقتباساً من الكتاب (اختياري)</label>
+      <label for="quote-input">أضف اقتباسًا من الكتاب (اختياري)</label>
       <div style="display:flex; gap:10px;">
         <input type="text" id="quote-input" placeholder="اكتب الاقتباس ثم اضغط إضافة أو Enter">
         <button class="btn small" onclick="addQuote()">إضافة</button>
@@ -297,13 +402,41 @@
     </div>
   </section>
 
-  <!-- ============ مكتبتي ============ -->
+  <!-- ============ مكتبتي (الخلاصات) ============ -->
   <section id="tab-library">
     <div class="card">
       <h2>مكتبتي</h2>
-      <p class="hint">كل الخلاصات التي حفظتها تظهر هنا، وتُحفظ في متصفحك تلقائياً.</p>
+      <p class="hint">كل الخلاصات التي حفظتها تظهر هنا، وتُحفظ في متصفحك تلقائيًا.</p>
       <div id="library-list"></div>
       <button class="btn danger no-print" onclick="clearLibrary()">🗑️ حذف الكل</button>
+    </div>
+  </section>
+
+  <!-- ============ كتبتي (إدارة الكتب المرفوعة) ============ -->
+  <section id="tab-books">
+    <div class="card">
+      <h2>كتبتي</h2>
+      <p class="hint">الكتب التي رفعتها تُحفظ داخل متصفحك: افتح أي كتاب لاحقًا واستخرج صفحات أو فصول أخرى دون رفع الملف مرة ثانية، وتابع آخر صفحة وصلت إليها.</p>
+      <div class="row">
+        <div>
+          <label for="book-search">🔍 بحث باسم الكتاب</label>
+          <input type="text" id="book-search" oninput="renderBooks()" placeholder="اكتب جزءًا من اسم الكتاب...">
+        </div>
+        <div>
+          <label for="book-filter">التصنيف</label>
+          <select id="book-filter" onchange="renderBooks()">
+            <option value="">كل المجالات</option>
+            <option>تطوير الذات</option>
+            <option>دين وعقيدة</option>
+            <option>تاريخ</option>
+            <option>علوم</option>
+            <option>أدب وروايات</option>
+            <option>إدارة واقتصاد</option>
+            <option>أخرى</option>
+          </select>
+        </div>
+      </div>
+      <div id="books-list"></div>
     </div>
   </section>
 </div>
@@ -311,16 +444,100 @@
 <footer>خُلاصة — أداة مجانية للدراسة واستخراج الفوائد | بياناتك محفوظة في متصفحك فقط</footer>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+/* ================== محمّل المكتبات (تحميل تدريجي حتى لا يتجمد الموقع) ================== */
+const CDN = {
+  pdfjs: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+  pdfjsWorker: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+  cmaps: "https://unpkg.com/pdfjs-dist@3.11.174/cmaps/",
+  stdFonts: "https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/",
+  jszip: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
+  mammoth: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js",
+  tesseract: "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js",
+  docx: "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"
+};
+const scriptCache = {};
+function libName(src) {
+  if (src.includes("pdf.js")) return "pdf.js (قراءة PDF)";
+  if (src.includes("jszip")) return "JSZip (قراءة EPUB)";
+  if (src.includes("mammoth")) return "Mammoth (قراءة Word)";
+  if (src.includes("tesseract")) return "Tesseract (التعرف الضوئي OCR)";
+  if (src.includes("docx")) return "docx (تنزيل Word)";
+  return src.split("/").pop() || src;
+}
+function loadScript(src) {
+  if (scriptCache[src]) return scriptCache[src];
+  scriptCache[src] = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => {
+      delete scriptCache[src];
+      const msg = "❌ تعذر تحميل مكتبة «" + libName(src) + "» من الإنترنت — قد يكون الاتصال منقطعًا أو محجوبًا بحاجب إعلانات. تحقق من اتصالك ثم أعد المحاولة.";
+      const prog = document.getElementById("extract-progress");
+      if (prog) prog.innerHTML = '<div class="warn">' + escapeHTML(msg) + "</div>";
+      reject(new Error(msg));
+    };
+    document.head.appendChild(s);
+  });
+  return scriptCache[src];
+}
+async function ensurePdfJs() {
+  if (typeof pdfjsLib === "undefined") await loadScript(CDN.pdfjs);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = CDN.pdfjsWorker;
+  return pdfjsLib;
+}
+async function ensureJsZip() { if (typeof JSZip === "undefined") await loadScript(CDN.jszip); return JSZip; }
+async function ensureMammoth() { if (typeof mammoth === "undefined") await loadScript(CDN.mammoth); return mammoth; }
+async function ensureTesseract() { if (typeof Tesseract === "undefined") await loadScript(CDN.tesseract); return Tesseract; }
+async function ensureDocx() { if (typeof docx === "undefined") await loadScript(CDN.docx); return docx; }
 
+/* ================== قاعدة بيانات المتصفح (IndexedDB) لحفظ ملفات الكتب ================== */
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("khulasa_db", 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore("books"); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(new Error("تعذر فتح مساحة تخزين الكتب في المتصفح: " + (req.error && req.error.message)));
+  });
+}
+async function idbPut(key, value) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("books", "readwrite");
+    tx.objectStore("books").put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(new Error("تعذر حفظ الكتاب في المتصفح: " + (tx.error && tx.error.message)));
+  });
+}
+async function idbGet(key) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("books", "readonly");
+    const rq = tx.objectStore("books").get(key);
+    rq.onsuccess = () => resolve(rq.result);
+    rq.onerror = () => reject(new Error("تعذر قراءة الكتاب من المتصفح: " + (rq.error && rq.error.message)));
+  });
+}
+async function idbDel(key) {
+  const db = await idbOpen();
+  return new Promise((resolve) => {
+    const tx = db.transaction("books", "readwrite");
+    tx.objectStore("books").delete(key);
+    tx.oncomplete = () => resolve();
+  });
+}
+
+/* ================== الحالة العامة ================== */
 let benefits = [];
 let quotes = [];
-let cards = [];
 let deckIndex = 0;
 let lastSummary = null;
 let lastExtraction = null;
+let currentBook = null;
+let extractCancelled = false;
+let ocrWorker = null;
 
-/* ---------- التبويبات ---------- */
+/* ================== التبويبات ================== */
 document.getElementById("tabs").addEventListener("click", (e) => {
   const btn = e.target.closest("button");
   if (!btn) return;
@@ -328,76 +545,764 @@ document.getElementById("tabs").addEventListener("click", (e) => {
   btn.classList.add("active");
   document.querySelectorAll("section").forEach(s => s.classList.remove("visible"));
   document.getElementById("tab-" + btn.dataset.tab).classList.add("visible");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-/* ---------- قراءة ملف الكتاب ---------- */
-document.getElementById("book-file").addEventListener("change", () => {
-  const f = document.getElementById("book-file").files[0];
-  document.getElementById("file-info").textContent = f ? "📁 " + f.name + " — اضغط «تحميل النص» بعد تحديد الصفحات" : "لم يتم اختيار ملف بعد";
-  document.getElementById("pg-range").style.display = f && f.name.toLowerCase().endsWith(".pdf") ? "flex" : "none";
+/* ================== أدوات مساعدة ================== */
+function escapeHTML(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function stars(n) { return "⭐".repeat(n); }
+function formatBytes(b) {
+  if (b < 1024) return b + " بايت";
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " كيلوبايت";
+  return (b / (1024 * 1024)).toFixed(1) + " ميغابايت";
+}
+function fmtLabel(f) { return { pdf: "PDF", docx: "Word (DOCX)", epub: "EPUB", txt: "نص TXT" }[f] || f; }
+function nextFrame() { return new Promise(r => setTimeout(r, 0)); }
+const el = (id) => document.getElementById(id);
+const CATS = ["تطوير الذات", "دين وعقيدة", "تاريخ", "علوم", "أدب وروايات", "إدارة واقتصاد", "أخرى"];
+
+/* ================== اختيار الملف وإعداده ================== */
+el("book-file").addEventListener("change", () => {
+  const f = el("book-file").files[0];
+  if (!f) return;
+  selectBookFile(f, true);
 });
 
-async function loadBookFile() {
-  const file = document.getElementById("book-file").files[0];
-  const info = document.getElementById("file-info");
-  if (!file) { alert("اختر ملف الكتاب أولاً."); return; }
+async function selectBookFile(file, saveIt) {
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  const format = ["pdf", "docx", "epub", "txt"].includes(ext) ? ext : (file.type.includes("pdf") ? "pdf" : null);
+  const info = el("file-info");
+  if (!format) {
+    info.innerHTML = "❌ صيغة غير مدعومة («" + escapeHTML(ext || file.type) + "») — المسموح: PDF، DOCX (Word)، EPUB، TXT";
+    return;
+  }
+  info.textContent = "⏳ تجهيز الملف...";
+  el("source-select").style.display = "none";
+  el("extract-preview").innerHTML = "";
+  el("extract-result").innerHTML = "";
+  el("text-actions").style.display = "none";
+  el("reextract-hint").style.display = "none";
+  el("btn-cancel").style.display = "none";
   try {
-    if (file.name.toLowerCase().endsWith(".txt")) {
-      const text = await file.text();
-      fillExtractBox(text, "✅ تم تحميل " + file.name + " — " + text.length.toLocaleString("ar") + " حرف");
-      return;
-    }
     const buf = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-    const total = pdf.numPages;
-    const from = Math.max(1, parseInt(document.getElementById("pg-from").value, 10) || 1);
-    const to = Math.min(total, parseInt(document.getElementById("pg-to").value, 10) || Math.min(10, total));
-    if (from > to) { alert("نطاق الصفحات غير صحيح: «من» أكبر من «إلى»."); return; }
-    let text = "";
-    for (let p = from; p <= to; p++) {
-      info.textContent = "⏳ قراءة الصفحة " + p + " من " + to + "...";
-      const page = await pdf.getPage(p);
-      const tc = await page.getTextContent();
-      text += tc.items.map(i => i.str).join(" ").replace(/\s+/g, " ") + "\n\n";
+    currentBook = {
+      name: file.name.replace(/\.[^.]+$/, ""),
+      fileName: file.name,
+      size: file.size,
+      format,
+      buf,
+      totalPages: null,
+      chapters: null,
+      id: null
+    };
+    info.innerHTML = "📄 <strong>" + escapeHTML(file.name) + "</strong> — الصيغة: " + fmtLabel(format) + " — الحجم: " + formatBytes(file.size);
+
+    if (saveIt) {
+      try {
+        const books = getBooks();
+        const existing = books.find(b => b.name === currentBook.name && b.size === file.size);
+        const rec = existing || { id: "b" + Date.now(), name: currentBook.name, format, size: file.size, category: "أخرى", totalPages: null, lastPage: 0, added: Date.now(), updated: Date.now() };
+        await idbPut(rec.id, { buf, format });
+        if (!existing) books.push(rec);
+        setBooks(books);
+        currentBook.id = rec.id;
+        if (existing) info.insertAdjacentHTML("beforeend", " — ℹ️ هذا الكتاب موجود في «كتبتي» فُتح من سجله بدل إضافة نسخة جديدة.");
+        renderBooks();
+      } catch (e) {
+        info.insertAdjacentHTML("beforeend", " — ℹ️ " + escapeHTML(e.message));
+      }
     }
-    fillExtractBox(text, "✅ تم استخراج نص الصفحات " + from + " إلى " + to + " (الكتاب " + total + " صفحة) — " + text.length.toLocaleString("ar") + " حرف");
+
+    if (format === "pdf") await preparePdf();
+    else if (format === "txt") await loadTxt();
+    else await prepareDocxOrEpub(format);
   } catch (err) {
-    info.textContent = "❌ تعذر قراءة الملف — إن كان PDF ممسوحاً ضوئياً (صور) فلن يُستخرج نصه. جرّب كتاباً نصياً.";
+    info.innerHTML = "❌ " + escapeHTML(String(err.message || err));
   }
 }
 
-function fillExtractBox(text, msg) {
-  document.getElementById("extract-input").value = text;
-  document.getElementById("extract-input").dispatchEvent(new Event("input"));
-  document.getElementById("file-info").textContent = msg;
+async function preparePdf() {
+  const info = el("file-info");
+  info.insertAdjacentHTML("beforeend", " — ⏳ جارٍ قراءة بيانات الملف...");
+  try {
+    const pdfjs = await ensurePdfJs();
+    const pdf = await openPdf(currentBook.buf);
+    currentBook.pdf = pdf;
+    currentBook.totalPages = pdf.numPages;
+    el("source-select").style.display = "block";
+    el("pg-select-area").style.display = "block";
+    el("chapter-select-area").style.display = "none";
+    el("ocr-box").style.display = "block";
+    el("pg-total").textContent = "عدد الصفحات الإجمالي: " + pdf.numPages.toLocaleString("ar") + " صفحة";
+    el("pg-to").value = Math.min(10, pdf.numPages);
+    el("pg-to").max = pdf.numPages;
+    el("pg-one").max = pdf.numPages;
+    info.innerHTML = "📄 <strong>" + escapeHTML(currentBook.fileName) + "</strong> — الصيغة: PDF — الحجم: " + formatBytes(currentBook.size) + " — عدد الصفحات: " + pdf.numPages;
+    updateBookMeta({ totalPages: pdf.numPages });
+  } catch (err) {
+    info.innerHTML = "❌ فشل فتح ملف PDF: " + escapeHTML(String(err.message || err)) + " — قد يكون الملف تالفًا أو محميًا بكلمة سر.";
+    currentBook.pdf = null;
+  }
 }
 
-/* ---------- الفوائد ---------- */
+async function openPdf(buf) {
+  const pdfjs = await ensurePdfJs();
+  return await pdfjs.getDocument({
+    data: new Uint8Array(buf),
+    cMapUrl: CDN.cmaps,
+    cMapPacked: true,
+    standardFontDataUrl: CDN.stdFonts
+  }).promise;
+}
+
+async function loadTxt() {
+  const text = new TextDecoder("utf-8").decode(currentBook.buf);
+  el("source-select").style.display = "none";
+  fillExtractBox(text, "✅ تم تحميل النص — " + text.length.toLocaleString("ar") + " حرف. مرّره للكناشة بالأزرار أدناه.");
+}
+
+async function prepareDocxOrEpub(format) {
+  const info = el("file-info");
+  info.insertAdjacentHTML("beforeend", " — ⏳ جارٍ تفكيك الفصول (قد يستغرق لحظات للملفات الكبيرة)...");
+  await nextFrame();
+  try {
+    let fullText = "";
+    if (format === "docx") {
+      const mammoth = await ensureMammoth();
+      const result = await mammoth.convertToHtml({ arrayBuffer: currentBook.buf });
+      const tmp = document.createElement("div");
+      tmp.innerHTML = result.value;
+      fullText = htmlToText(tmp);
+    } else {
+      fullText = await epubToText(currentBook.buf);
+    }
+    currentBook.chapters = splitChapters(fullText);
+    if (!currentBook.chapters.length) throw new Error("لم يُعثر على نص داخل الملف — قد يكون ملفًا فارغًا أو تالفًا");
+    el("source-select").style.display = "block";
+    el("pg-select-area").style.display = "none";
+    el("chapter-select-area").style.display = "block";
+    const list = el("ch-list");
+    list.innerHTML = "";
+    currentBook.chapters.forEach((c, i) => {
+      const lab = document.createElement("label");
+      lab.className = "ch-item";
+      lab.innerHTML = '<input type="checkbox" class="ch-pick" data-i="' + i + '"><span>' + escapeHTML(c.title) + '</span><span class="len">' + c.text.length.toLocaleString("ar") + ' حرف</span>';
+      list.appendChild(lab);
+    });
+    el("ch-to").max = currentBook.chapters.length;
+    el("ch-from").max = currentBook.chapters.length;
+    info.innerHTML = "📄 <strong>" + escapeHTML(currentBook.fileName) + "</strong> — الصيغة: " + fmtLabel(format) + " — الحجم: " + formatBytes(currentBook.size) + " — عدد الفصول: " + currentBook.chapters.length;
+    updateBookMeta({ totalPages: currentBook.chapters.length });
+  } catch (err) {
+    info.innerHTML = "❌ فشل قراءة الملف: " + escapeHTML(String(err.message || err));
+  }
+}
+
+function htmlToText(root) {
+  root.querySelectorAll("script,style").forEach(e => e.remove());
+  root.querySelectorAll("h1,h2,h3").forEach(h => {
+    const t = h.textContent.trim();
+    if (t && !t.startsWith("## ")) h.textContent = "## " + t;
+  });
+  const tmp = document.createElement("div");
+  tmp.innerHTML = root.innerHTML.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h[1-6]|blockquote|tr)>/gi, "\n\n");
+  return tmp.textContent.replace(/[ \t\u00a0]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+async function epubToText(buf) {
+  const JSZipLib = await ensureJsZip();
+  const zip = await JSZipLib.loadAsync(buf);
+  const containerFile = zip.file("META-INF/container.xml");
+  if (!containerFile) throw new Error("ملف EPUB غير سليم (لا يحوي container.xml)");
+  const containerXml = await containerFile.async("string");
+  const opfPathM = containerXml.match(/full-path="([^"]+)"/);
+  if (!opfPathM) throw new Error("ملف EPUB غير سليم (لا يحوي مسار الفهرس)");
+  const opfPath = opfPathM[1];
+  const opfFile = zip.file(opfPath);
+  if (!opfFile) throw new Error("ملف EPUB غير سليم (فهرس مفقود)");
+  const opf = await opfFile.async("string");
+  const opfDir = opfPath.includes("/") ? opfPath.slice(0, opfPath.lastIndexOf("/") + 1) : "";
+  const manifest = {};
+  for (const m of opf.matchAll(/<item\b[^>]*>/g)) {
+    const id = (m[0].match(/id="([^"]+)"/) || [])[1];
+    const href = (m[0].match(/href="([^"]+)"/) || [])[1];
+    const mt = (m[0].match(/media-type="([^"]+)"/) || [])[1];
+    if (id && href && mt && /x?html/.test(mt)) manifest[id] = href;
+  }
+  const spineIds = [...opf.matchAll(/<itemref\b[^>]*idref="([^"]+)"/g)].map(m => m[1]);
+  const texts = [];
+  for (const id of spineIds) {
+    const href = manifest[id];
+    if (!href) continue;
+    const path = opfDir + decodeURIComponent(href).replace(/^\//, "");
+    const f = zip.file(path) || zip.file(decodeURIComponent(href).replace(/^\//, ""));
+    if (!f) continue;
+    const raw = await f.async("string");
+    const doc = new DOMParser().parseFromString(raw, "text/html");
+    const title = (doc.querySelector("h1,h2,h3,title") || {}).textContent || "";
+    let t = htmlToText(doc.body || doc.documentElement);
+    if (title && t && !t.startsWith("## ")) t = "## " + title.trim() + "\n\n" + t;
+    texts.push(t);
+  }
+  return texts.join("\n\n");
+}
+
+function splitChapters(text) {
+  const lines = text.split("\n");
+  const chs = [];
+  let cur = { title: "المقدمة", text: [] };
+  for (const ln of lines) {
+    if (/^##\s+/.test(ln.trim()) && cur.text.join("\n").trim().length > 150) {
+      cur.text = cur.text.join("\n").trim();
+      chs.push(cur);
+      cur = { title: ln.replace(/^##\s+/, "").trim().slice(0, 80), text: [] };
+    } else cur.text.push(ln);
+  }
+  cur.text = cur.text.join("\n").trim();
+  if (cur.text) chs.push(cur);
+  return chs;
+}
+
+/* ================== تحديد الصفحات / الفصول ================== */
+document.querySelectorAll('input[name="pgmode"]').forEach(r => r.addEventListener("change", updatePgInputs));
+document.querySelectorAll('input[name="chmode"]').forEach(r => r.addEventListener("change", updateChInputs));
+function updatePgInputs() {
+  const mode = document.querySelector('input[name="pgmode"]:checked').value;
+  el("wrap-pg-one").style.display = mode === "one" ? "block" : "none";
+  el("wrap-pg-from").style.display = mode === "range" ? "block" : "none";
+  el("wrap-pg-to").style.display = mode === "range" ? "block" : "none";
+  el("wrap-pg-list").style.display = mode === "list" ? "block" : "none";
+}
+function updateChInputs() {
+  const mode = document.querySelector('input[name="chmode"]:checked').value;
+  el("ch-range").style.display = mode === "range" ? "flex" : "none";
+  el("ch-list").style.display = mode === "pick" ? "block" : "none";
+}
+
+function parsePageList(str, total) {
+  const nums = new Set();
+  str.split(/[،\s]+/).forEach(t => {
+    const n = parseInt(t, 10);
+    if (!isNaN(n) && n >= 1 && (!total || n <= total)) nums.add(n);
+  });
+  return [...nums].sort((a, b) => a - b);
+}
+
+function buildPagePlan() {
+  const total = currentBook.totalPages;
+  const mode = document.querySelector('input[name="pgmode"]:checked').value;
+  if (mode === "all") return Array.from({ length: total }, (_, i) => i + 1);
+  if (mode === "one") {
+    const n = parseInt(el("pg-one").value, 10) || 1;
+    if (n < 1 || n > total) throw new Error("رقم الصفحة خارج النطاق (الكتاب " + total + " صفحة).");
+    return [n];
+  }
+  if (mode === "range") {
+    const from = parseInt(el("pg-from").value, 10) || 1;
+    const to = parseInt(el("pg-to").value, 10) || 1;
+    if (from > to) throw new Error("نطاق الصفحات غير صحيح: «من» أكبر من «إلى».");
+    if (from < 1 || to > total) throw new Error("النطاق خارج حدود الكتاب (1 إلى " + total + ").");
+    return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+  }
+  const list = parsePageList(el("pg-list").value, total);
+  if (!list.length) throw new Error("اكتب أرقام صفحات صحيحة، مثل: 5، 12، 18، 30");
+  return list;
+}
+
+function buildChapterPlan() {
+  const chapters = currentBook.chapters;
+  const mode = document.querySelector('input[name="chmode"]:checked').value;
+  if (mode === "all") return chapters.map((c, i) => ({ title: c.title, index: i }));
+  if (mode === "range") {
+    const from = Math.max(1, parseInt(el("ch-from").value, 10) || 1);
+    const to = Math.min(chapters.length, parseInt(el("ch-to").value, 10) || 1);
+    if (from > to) throw new Error("نطاق الفصول غير صحيح: «من» أكبر من «إلى».");
+    return chapters.slice(from - 1, to).map((c, i) => ({ title: c.title, index: from - 1 + i }));
+  }
+  const picked = [...document.querySelectorAll(".ch-pick:checked")].map(cb => parseInt(cb.dataset.i, 10));
+  if (!picked.length) throw new Error("اختر فصلًا واحدًا على الأقل من القائمة.");
+  return picked.map(i => ({ title: chapters[i].title, index: i }));
+}
+
+/* ================== استخراج نص PDF بجودة عالية (بنية + عناوين + حواشي) ================== */
+async function pdfPageText(pdf, p) {
+  const page = await pdf.getPage(p);
+  const tc = await page.getTextContent();
+  if (!tc.items.length) return { text: "", empty: true };
+  const vp = page.getViewport({ scale: 1 });
+  let arCount = 0, latCount = 0;
+  for (const it of tc.items) {
+    const ar = it.str.match(/[\u0600-\u06FF]/g);
+    if (ar) arCount += ar.length;
+    const la = it.str.match(/[A-Za-z]/g);
+    if (la) latCount += la.length;
+  }
+  const rtl = arCount > 0 && arCount >= latCount;
+  const lines = [];
+  for (const it of tc.items) {
+    if (!it.str.trim()) continue;
+    const y = Math.round(it.transform[5]);
+    const h = Math.abs(it.transform[3]) || Math.abs(it.transform[0]) || 10;
+    const part = { str: it.str, x: it.transform[4], w: it.width || 0, h };
+    const last = lines[lines.length - 1];
+    if (last && Math.abs(last.y - y) <= 2) { last.parts.push(part); last.h = Math.max(last.h, h); }
+    else lines.push({ y, h, parts: [part] });
+  }
+  if (!lines.length) return { text: "", empty: true };
+  const hs = lines.map(l => l.h).sort((a, b) => a - b);
+  const med = hs[Math.floor(hs.length / 2)] || 10;
+  lines.sort((a, b) => b.y - a.y);
+  const body = [];
+  const notes = [];
+  const pageNumRe = /^[\d\u0660-\u0669\u06F0-\u06F9\s.,\u066B\u066C-]+$/;
+  for (const l of lines) {
+    const ordered = l.parts.slice().sort((a, b) => rtl ? b.x - a.x : a.x - b.x);
+    let lineText = "";
+    for (let j = 0; j < ordered.length; j++) {
+      if (!j) { lineText = ordered[0].str; continue; }
+      const prev = ordered[j - 1], cur = ordered[j];
+      const gap = rtl ? (prev.x - (cur.x + cur.w)) : (cur.x - (prev.x + prev.w));
+      const isDiacritic = cur.w === 0 && /[\u064B-\u0652\u0670]/.test(cur.str);
+      lineText += (isDiacritic ? "" : (gap > cur.h * 0.18 ? " " : "")) + cur.str;
+    }
+    lineText = lineText.replace(/\s+/g, " ").replace(/\s+([\u064B-\u0652\u0670])/g, "$1").replace(/[\u200e\u200f\ufeff]/g, "").trim();
+    if (!lineText) continue;
+    if (pageNumRe.test(lineText)) continue;
+    if (l.h < med * 0.82 && l.y < vp.height * 0.22) notes.push(lineText);
+    else if (l.h >= med * 1.4 && lineText.length < 90) body.push("## " + lineText);
+    else body.push(lineText);
+  }
+  let text = body.join("\n");
+  if (notes.length) text += "\n\n" + notes.map(n => "❲حاشية❳ " + n).join("\n");
+  return { text, empty: false };
+}
+
+let ocrWorkerLang = "";
+async function buildOcrWorker(langs, onStatus) {
+  const T = await ensureTesseract();
+  if (onStatus) onStatus("جارٍ تحميل بيانات التعرف الضوئي (" + (langs === "ara" ? "العربية" : "العربية + الإنجليزية") + ") — نحو 15 ميغابايت من الإنترنت لمرة واحدة...");
+  const w = await T.createWorker(langs, 1, {
+    logger: m => { if (onStatus && m.status === "recognizing text") onStatus(null, m.progress); }
+  });
+  ocrWorker = w;
+  ocrWorkerLang = langs;
+  return w;
+}
+async function ocrPdfPage(pdf, p, onStatus) {
+  const langs = el("ocr-eng") && el("ocr-eng").checked ? "ara+eng" : "ara";
+  if (!ocrWorker || ocrWorkerLang !== langs) {
+    if (!confirm("⚠️ قبل أول تشغيل للتعرف الضوئي: سيُحمّل نحو 15 ميغابايت من الإنترنت لمرة واحدة (بيانات اللغة). هل تريد المتابعة؟")) {
+      throw new Error("أُلغيت عملية تحميل بيانات التعرف الضوئي (OCR).");
+    }
+    try {
+      await buildOcrWorker(langs, onStatus);
+    } catch (err) {
+      ocrWorker = null;
+      ocrWorkerLang = "";
+      throw new Error("فشل تحميل بيانات لغة OCR («" + langs + "»): " + String((err && err.message) || err) + " — تحقق من اتصال الإنترنت ثم أعد المحاولة.");
+    }
+  }
+  const page = await pdf.getPage(p);
+  const vp = page.getViewport({ scale: 2 });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.min(2200, Math.round(vp.width));
+  canvas.height = Math.round(canvas.width * vp.height / vp.width);
+  const ctx = canvas.getContext("2d");
+  await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: canvas.width / vp.width }) }).promise;
+  const res = await ocrWorker.recognize(canvas);
+  return (res.data.text || "").trim();
+}
+async function testOcrPage() {
+  const box = el("ocr-test-result");
+  if (!currentBook || currentBook.format !== "pdf") { box.innerHTML = '<div class="warn">⚠️ اختر ملف PDF أولًا ثم جرّب الاختبار.</div>'; return; }
+  let p;
+  try { p = buildPagePlan()[0]; } catch (err) { box.innerHTML = '<div class="warn">⚠️ ' + escapeHTML(err.message) + '</div>'; return; }
+  try {
+    if (!currentBook.pdf) currentBook.pdf = await openPdf(currentBook.buf);
+  } catch (err) {
+    box.innerHTML = '<div class="warn">❌ تعذر فتح ملف PDF: ' + escapeHTML(String(err.message || err)) + '</div>';
+    return;
+  }
+  box.innerHTML = '<p class="hint">⏳ جارٍ اختبار OCR على الصفحة ' + p + ' فقط...</p>';
+  try {
+    const txt = await ocrPdfPage(currentBook.pdf, p, (msg, prog) => {
+      if (msg) box.innerHTML = '<p class="hint">⏳ ' + escapeHTML(msg) + '</p>';
+      else if (prog !== undefined) box.innerHTML = '<p class="hint">⏳ التعرف الضوئي على الصفحة ' + p + ' — ' + Math.round(prog * 100) + '%</p>';
+    });
+    box.innerHTML = txt
+      ? '<div class="ok">✅ نجح الاختبار على الصفحة ' + p + ' — استُخرج ' + txt.length.toLocaleString("ar") + ' حرفًا. عيّنة من النص:</div><textarea style="min-height:90px;" readonly>' + escapeHTML(txt.slice(0, 500)) + '</textarea>'
+      : '<div class="warn">⚠️ اكتمل التعرف الضوئي لكن لم يُستخرج أي نص من الصفحة ' + p + ' — قد تكون الصفحة فارغة أو بجودة منخفضة.</div>';
+  } catch (err) {
+    box.innerHTML = '<div class="warn">❌ فشل اختبار OCR: ' + escapeHTML(String(err.message || err)) + '</div>';
+  }
+}
+
+/* ================== خط الاستخراج الرئيسي ================== */
+function setProgress(pct, msg) {
+  el("extract-progress").innerHTML =
+    '<div class="pbar"><div style="width:' + Math.round(pct) + '%"></div></div>' +
+    '<p class="ptext">' + escapeHTML(msg || "") + "</p>";
+}
+function cancelExtraction() {
+  extractCancelled = true;
+  el("btn-cancel").disabled = true;
+  el("btn-cancel").textContent = "⏳ جارٍ الإيقاف...";
+}
+
+async function runExtraction() {
+  if (!currentBook) { alert("اختر ملف الكتاب أولًا."); return; }
+  const out = [];
+  let plan, kind;
+  try {
+    if (currentBook.format === "txt") { fillExtractBox(new TextDecoder("utf-8").decode(currentBook.buf), "✅ تم تحميل النص."); return; }
+    plan = currentBook.format === "pdf" ? buildPagePlan() : buildChapterPlan();
+    kind = currentBook.format === "pdf" ? "pages" : "chapters";
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+  extractCancelled = false;
+  const btn = el("btn-cancel");
+  btn.style.display = "inline-block";
+  btn.disabled = false;
+  btn.textContent = "✖ إلغاء الاستخراج";
+  el("extract-result").innerHTML = "";
+  el("extract-preview").innerHTML = "";
+  el("text-actions").style.display = "none";
+  el("reextract-hint").style.display = "none";
+
+  const parts = [];
+  const failed = [];
+  const ocrPages = [];
+  let ocrError = "";
+  const useOcr = el("ocr-on") && el("ocr-on").checked && currentBook.format === "pdf";
+  try {
+    if (kind === "pages") {
+      if (!currentBook.pdf) currentBook.pdf = await openPdf(currentBook.buf);
+      const pdf = currentBook.pdf;
+      for (let i = 0; i < plan.length; i++) {
+        if (extractCancelled) break;
+        const p = plan[i];
+        setProgress((i / plan.length) * 100, "⏳ استخراج الصفحة " + p + " (" + (i + 1) + " من " + plan.length + ")...");
+        await nextFrame();
+        try {
+          let r = await pdfPageText(pdf, p);
+          if (r.empty && useOcr) {
+            let ocrTxt = "";
+            try {
+              ocrTxt = await ocrPdfPage(pdf, p, (msg, prog) => {
+                if (msg) setProgress((i / plan.length) * 100, "⏳ صفحة " + p + ": " + msg);
+                else if (prog !== undefined) setProgress(((i + prog) / plan.length) * 100, "🔍 تعرف ضوئي على الصفحة " + p + " — " + Math.round(prog * 100) + "%");
+              });
+            } catch (ocrErr) {
+              ocrError = String((ocrErr && ocrErr.message) || ocrErr);
+              setProgress((i / plan.length) * 100, "⚠️ " + ocrError);
+              failed.push(p);
+            }
+            if (ocrTxt) { ocrPages.push(p); parts.push({ label: "صفحة " + p + " (تعرف ضوئي)", text: ocrTxt }); }
+            else if (!failed.includes(p)) failed.push(p);
+          } else if (r.empty) {
+            failed.push(p);
+            parts.push({ label: "صفحة " + p, text: "" });
+          } else {
+            parts.push({ label: "صفحة " + p, text: r.text });
+          }
+        } catch (perr) {
+          failed.push(p);
+        }
+      }
+    } else {
+      for (let i = 0; i < plan.length; i++) {
+        if (extractCancelled) break;
+        const c = plan[i];
+        setProgress((i / plan.length) * 100, "⏳ استخراج الفصل «" + c.title + "» (" + (i + 1) + " من " + plan.length + ")...");
+        await nextFrame();
+        const t = currentBook.chapters[c.index].text;
+        if (t) parts.push({ label: "فصل: " + c.title, text: t });
+        else failed.push(c.title);
+      }
+    }
+  } catch (err) {
+    el("extract-progress").innerHTML = "";
+    btn.style.display = "none";
+    el("extract-preview").innerHTML = '<div class="warn">❌ فشل الاستخراج: ' + escapeHTML(String(err.message || err)) + "</div>";
+    return;
+  }
+  el("extract-progress").innerHTML = "";
+  btn.style.display = "none";
+  btn.disabled = false;
+  btn.textContent = "✖ إلغاء الاستخراج";
+
+  if (extractCancelled && !parts.length) {
+    el("extract-preview").innerHTML = '<div class="warn">🚫 أُلغيت عملية الاستخراج قبل استخراج أي نص.</div>';
+    return;
+  }
+  const text = parts.filter(p => p.text).map(p => "— " + p.label + " —\n" + p.text).join("\n\n");
+  fillExtractBox(text, "✅ تم استخراج " + text.length.toLocaleString("ar") + " حرف");
+  showTextPreview({ kind, parts, failed, ocrPages, ocrError, cancelled: extractCancelled });
+  if (kind === "pages" && parts.length) {
+    const lastPg = Math.max(...parts.map(p => { const m = p.label.match(/\d+/); return m ? parseInt(m[0], 10) : 0; }));
+    updateBookMeta({ lastPage: Math.max(getBookRec(currentBook.id).lastPage || 0, lastPg), updated: Date.now() });
+    renderBooks();
+  }
+  el("reextract-hint").style.display = "block";
+}
+
+function showTextPreview(res) {
+  const box = el("extract-preview");
+  const unit = res.kind === "pages" ? "صفحة" : "فصل";
+  let html = '<div class="ok">✅ تم استخراج النص من ' + res.parts.length + " " + unit + " — " + el("extract-input").value.length.toLocaleString("ar") + " حرف.</div>";
+  if (res.cancelled) html += '<div class="warn">🚫 أُلغيت العملية جزئيًا — النص المعروض يغطي ما استُخرج قبل الإلغاء فقط.</div>';
+  if (res.ocrPages.length) html += '<div class="warn">🔍 الصفحات المقروءة بالتعرف الضوئي (OCR): ' + res.ocrPages.join("، ") + " — راجعها جيدًا فقد تحتوي أخطاء قراءة.</div>";
+  if (res.ocrError) html += '<div class="warn">⚠️ فشل التعرف الضوئي (OCR): ' + escapeHTML(res.ocrError) + "</div>";
+  if (res.failed.length) {
+    const isPdf = res.kind === "pages";
+    html += '<div class="warn">⚠️ تعذّرت قراءة ' + res.failed.length + " " + unit + ": " + res.failed.slice(0, 20).join("، ") + (res.failed.length > 20 ? " وغيرها..." : "") +
+      (isPdf ? " — غالبًا صفحات مصوّرة بلا نص قابل للنسخ. فعّل خيار «التعرف الضوئي OCR» أعلاه وأعد الاستخراج." : "") + "</div>";
+  }
+  box.innerHTML = html;
+  el("text-actions").style.display = "block";
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function fillExtractBox(text, msg) {
+  el("extract-input").value = text;
+  el("extract-input").dispatchEvent(new Event("input"));
+  el("char-count").textContent = text.length.toLocaleString("ar") + " حرف";
+  if (msg) el("file-info").textContent = msg;
+}
+
+/* ================== خيارات ما بعد الاستخراج: نسخ وتنزيل ================== */
+function textToHtmlBody(text) {
+  const paras = text.split(/\n{2,}/).map(b => {
+    const t = b.trim();
+    if (!t) return "";
+    if (/^##\s+/.test(t)) return "<h2>" + escapeHTML(t.replace(/^##\s+/, "")) + "</h2>";
+    if (/^— .+ —$/.test(t)) return '<h3 style="color:#b98a2f;">' + escapeHTML(t) + "</h3>";
+    return "<p>" + escapeHTML(t).replace(/\n/g, "<br>") + "</p>";
+  });
+  return paras.join("\n");
+}
+function baseName() { return (currentBook ? currentBook.name : "نص-مستخرج").replace(/[\\/:*?"<>|]/g, "_"); }
+function copyExtractedText() {
+  const t = el("extract-input").value;
+  if (!t) { alert("لا يوجد نص لنسخه."); return; }
+  const done = () => alert("تم نسخ النص إلى الحافظة ✅");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t, done));
+  else fallbackCopy(t, done);
+}
+function fallbackCopy(t, done) {
+  const ta = document.createElement("textarea");
+  ta.value = t;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) { alert("تعذر النسخ — انسخ النص يدويًا من الصندوق."); }
+  document.body.removeChild(ta);
+}
+function downloadBlob(blob, filename) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function downloadTXT() {
+  const t = el("extract-input").value;
+  if (!t) { alert("لا يوجد نص لتنزيله."); return; }
+  downloadBlob(new Blob(["\ufeff" + t], { type: "text/plain;charset=utf-8" }), baseName() + ".txt");
+}
+function toggleKeyVisibility() {
+  const k = el("ai-key");
+  const btn = k.nextElementSibling;
+  const show = k.type === "password";
+  k.type = show ? "text" : "password";
+  btn.textContent = show ? "إخفاء" : "إظهار";
+}
+async function downloadWord() {
+  const t = el("extract-input").value;
+  if (!t) { alert("لا يوجد نص لتنزيله."); return; }
+  try {
+    const D = await ensureDocx();
+    const children = [];
+    for (const block of t.split(/\n{2,}/)) {
+      const b = block.trim();
+      if (!b) continue;
+      if (/^##\s+/.test(b)) {
+        children.push(new D.Paragraph({ text: b.replace(/^##\s+/, ""), heading: D.HeadingLevel.HEADING_2, bidirectional: true, alignment: D.AlignmentType.RIGHT }));
+      } else if (/^— .+ —$/.test(b)) {
+        children.push(new D.Paragraph({ bidirectional: true, alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: b, rightToLeft: true, bold: true, color: "B98A2F" })] }));
+      } else {
+        const runs = [];
+        b.split("\n").forEach((ln, i) => {
+          if (i) runs.push(new D.TextRun({ break: 1 }));
+          runs.push(new D.TextRun({ text: ln, rightToLeft: true }));
+        });
+        children.push(new D.Paragraph({ bidirectional: true, alignment: D.AlignmentType.RIGHT, children: runs }));
+      }
+    }
+    const doc = new D.Document({ sections: [{ properties: {}, children }] });
+    const blob = await D.Packer.toBlob(doc);
+    downloadBlob(blob, baseName() + ".docx");
+    return;
+  } catch (err) {
+    alert("تعذر توليد ملف DOCX حقيقي (" + String((err && err.message) || err) + ") — سيُستخدم البديل: ملف HTML بامتداد .doc.");
+  }
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>' + escapeHTML(baseName()) + '</title><style>body{direction:rtl;text-align:right;font-family:"Traditional Arabic","Sakkal Majalla",Arial;font-size:14pt;line-height:1.9;}h2{color:#0e7a5f;}h3{color:#b98a2f;}</style></head><body dir="rtl">' + textToHtmlBody(t) + "</body></html>";
+  downloadBlob(new Blob(["\ufeff" + html], { type: "application/msword;charset=utf-8" }), baseName() + ".doc");
+}
+function downloadPDF() {
+  const t = el("extract-input").value;
+  if (!t) { alert("لا يوجد نص لتنزيله."); return; }
+  const w = window.open("", "_blank");
+  if (!w) { alert("منع المتصفح فتح نافذة الطباعة — اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة."); return; }
+  w.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + escapeHTML(baseName()) + '</title><style>@page{margin:2cm;}body{font-family:"Segoe UI","Noto Kufi Arabic",Tahoma,Arial,sans-serif;direction:rtl;text-align:right;line-height:2;}h2{color:#0e7a5f;}h3{color:#b98a2f;}</style></head><body>' + textToHtmlBody(t) + "<scr" + "ipt>window.onload=()=>setTimeout(()=>window.print(),300);</scr" + "ipt></body></html>");
+  w.document.close();
+}
+
+/* ================== كتبتي: إدارة الكتب المرفوعة ================== */
+function getBooks() { return JSON.parse(localStorage.getItem("khulasa_books") || "[]"); }
+function setBooks(arr) { localStorage.setItem("khulasa_books", JSON.stringify(arr)); }
+function getBookRec(id) {
+  if (!id) return { lastPage: 0 };
+  return getBooks().find(b => b.id === id) || { lastPage: 0 };
+}
+function updateBookMeta(patch) {
+  if (!currentBook || !currentBook.id) return;
+  const books = getBooks();
+  const rec = books.find(b => b.id === currentBook.id);
+  if (!rec) return;
+  Object.assign(rec, patch);
+  rec.updated = Date.now();
+  setBooks(books);
+}
+function renderBooks() {
+  const box = el("books-list");
+  let books = getBooks().slice().sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  const q = (el("book-search").value || "").trim();
+  const cat = el("book-filter").value;
+  if (q) books = books.filter(b => (b.name || "").includes(q));
+  if (cat) books = books.filter(b => b.category === cat);
+  if (!books.length) {
+    box.innerHTML = '<div class="empty">' + (getBooks().length ? "لا توجد نتائج مطابقة للبحث 🔍" : "لم ترفع أي كتاب بعد — ارفع كتابك الأول من تبويب «كناشة الفوائد» 🌱") + "</div>";
+    return;
+  }
+  box.innerHTML = "";
+  books.forEach(b => {
+    const div = document.createElement("div");
+    div.className = "book-item";
+    let inner = "<h3>📖 " + escapeHTML(b.name) + ' <span class="tag">' + fmtLabel(b.format) + "</span>" + (b.category && b.category !== "أخرى" ? ' <span class="tag">' + escapeHTML(b.category) + "</span>" : "") + "</h3>";
+    inner += '<p class="meta">💾 ' + formatBytes(b.size || 0) + (b.totalPages ? " • 📑 " + b.totalPages.toLocaleString("ar") + (b.format === "pdf" ? " صفحة" : " فصل") : "") +
+      (b.lastPage ? ' • ✅ آخر صفحة وصلت إليها: <strong>' + b.lastPage.toLocaleString("ar") + "</strong>" : "") +
+      " • 🕒 آخر عمل: " + new Date(b.updated || b.added).toLocaleDateString("ar") + "</p>";
+    div.innerHTML = inner;
+
+    const actions = document.createElement("div");
+    actions.className = "book-actions";
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "btn small";
+    openBtn.textContent = "📂 فتح واستخراج";
+    openBtn.onclick = () => openBook(b.id);
+
+    const catSel = document.createElement("select");
+    catSel.style.cssText = "max-width:150px;padding:6px 10px;font-size:.85rem;margin-top:0;";
+    CATS.forEach(c => {
+      const o = document.createElement("option");
+      o.textContent = c;
+      if (c === b.category) o.selected = true;
+      catSel.appendChild(o);
+    });
+    catSel.onchange = () => {
+      b.category = catSel.value;
+      const books2 = getBooks();
+      const r = books2.find(x => x.id === b.id);
+      if (r) { r.category = catSel.value; r.updated = Date.now(); setBooks(books2); }
+    };
+
+    const lastWrap = document.createElement("button");
+    lastWrap.className = "btn small secondary";
+    lastWrap.textContent = "🔖 آخر صفحة";
+    lastWrap.onclick = () => {
+      const v = prompt("آخر صفحة وصلت إليها في هذا الكتاب:", b.lastPage || "");
+      if (v !== null) {
+        const n = parseInt(v, 10) || 0;
+        const books2 = getBooks();
+        const r = books2.find(x => x.id === b.id);
+        if (r) { r.lastPage = n; r.updated = Date.now(); setBooks(books2); renderBooks(); }
+      }
+    };
+
+    const renBtn = document.createElement("button");
+    renBtn.className = "btn small secondary";
+    renBtn.textContent = "✏️ إعادة تسمية";
+    renBtn.onclick = () => {
+      const v = prompt("الاسم الجديد للكتاب:", b.name);
+      if (v && v.trim()) {
+        const books2 = getBooks();
+        const r = books2.find(x => x.id === b.id);
+        if (r) { r.name = v.trim(); r.updated = Date.now(); setBooks(books2); renderBooks(); }
+      }
+    };
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn small danger";
+    delBtn.textContent = "🗑️ حذف";
+    delBtn.onclick = async () => {
+      if (!confirm("حذف «" + b.name + "» من كتبك؟ (لن تُحذف خلاصاته المحفوظة)")) return;
+      await idbDel(b.id);
+      setBooks(getBooks().filter(x => x.id !== b.id));
+      renderBooks();
+    };
+
+    actions.append(openBtn, catSel, lastWrap, renBtn, delBtn);
+    div.appendChild(actions);
+    box.appendChild(div);
+  });
+}
+
+async function openBook(id) {
+  const rec = getBooks().find(b => b.id === id);
+  if (!rec) { alert("لم يُعثر على الكتاب."); return; }
+  el("file-info").textContent = "⏳ جارٍ فتح الكتاب من مساحة المتصفح...";
+  document.querySelector('#tabs button[data-tab="extractor"]').click();
+  try {
+    const data = await idbGet(id);
+    if (!data || !data.buf) throw new Error("ملف الكتاب غير موجود في مساحة المتصفح — أعد رفعه من جديد.");
+    const file = new File([data.buf], rec.name + "." + rec.format, { type: "application/octet-stream" });
+    await selectBookFile(file, false);
+    currentBook.id = id;
+  } catch (err) {
+    el("file-info").innerHTML = "❌ " + escapeHTML(String(err.message || err));
+  }
+}
+
+/* ================== الفوائد والاقتباسات (تبويب الخلاصة) ================== */
 function addBenefit() {
-  const el = document.getElementById("benefit-input");
-  const v = el.value.trim();
+  const e = el("benefit-input");
+  const v = e.value.trim();
   if (!v) return;
   benefits.push(v);
-  el.value = "";
+  e.value = "";
   renderList("benefits-list", benefits);
-  el.focus();
+  e.focus();
 }
 function addQuote() {
-  const el = document.getElementById("quote-input");
-  const v = el.value.trim();
+  const e = el("quote-input");
+  const v = e.value.trim();
   if (!v) return;
   quotes.push(v);
-  el.value = "";
+  e.value = "";
   renderList("quotes-list", quotes);
-  el.focus();
+  e.focus();
 }
 function renderList(id, arr) {
-  const box = document.getElementById(id);
+  const box = el(id);
   box.innerHTML = "";
   arr.forEach((item, i) => {
     const div = document.createElement("div");
     div.className = "list-item";
-    div.innerHTML = `<span class="txt"></span><button class="del" title="حذف">✕</button>`;
+    div.innerHTML = '<span class="txt"></span><button class="del" title="حذف">✕</button>';
     div.querySelector(".txt").textContent = item;
     div.querySelector(".del").onclick = () => {
       arr.splice(i, 1);
@@ -406,25 +1311,24 @@ function renderList(id, arr) {
     box.appendChild(div);
   });
 }
-document.getElementById("benefit-input").addEventListener("keydown", e => { if (e.key === "Enter") addBenefit(); });
-document.getElementById("quote-input").addEventListener("keydown", e => { if (e.key === "Enter") addQuote(); });
-
-/* ---------- كناشة الفوائد ---------- */
-const EXTRACT_SYS = "أنت كناشة فوائد محترف متخصص في قراءة الكتب واستخراج الفوائد بالعربية الفصحى الواضحة. تتحرى الدقة والشمول: تستخرج أكبر قدر ممكن من الفوائد الحقيقية المهمة، وكل فائدة تكون جملة كاملة معبّرة مستقلة بمعناها تُفهم دون الرجوع للنص الأصلي، دون حشو أو تكرار أو فوائد سطحة.";
-const EXTRACT_USER_TMPL = "اقرأ النص التالي بدقة واستخرج منه الفوائد:\n1) خلاصة موجزة في سطرين إلى ثلاثة أسطر تعبر عن جوهر النص\n2) أكبر عدد ممكن من الفوائد المهمة (من 8 إلى 15 فائدة): كل فائدة جملة كاملة معبّرة مفيدة بذاتها، تغطي كل الأفكار الجديدة في النص دون تكرار\n3) أبرز اقتباس حرفي واحد إن وُجد\n\nأعد الإجابة بصيغة JSON فقط بهذا الشكل دون أي نص إضافي:\n{\"summary\": \"...\", \"benefits\": [\"...\", \"...\"], \"quote\": \"...\"}\n\nالنص:\n";
-
-document.getElementById("extract-input").addEventListener("input", (e) => {
-  document.getElementById("char-count").textContent = e.target.value.length.toLocaleString("ar") + " حرف";
+el("benefit-input").addEventListener("keydown", e => { if (e.key === "Enter") addBenefit(); });
+el("quote-input").addEventListener("keydown", e => { if (e.key === "Enter") addQuote(); });
+el("extract-input").addEventListener("input", (e) => {
+  el("char-count").textContent = e.target.value.length.toLocaleString("ar") + " حرف";
 });
+
+/* ================== كناشة الفوائد بالذكاء الاصطناعي ================== */
+const EXTRACT_SYS = "أنت كناشة فوائد محترف متخصص في قراءة الكتب واستخراج الفوائد بالعربية الفصحى الواضحة. تتحرى الدقة والشمول: تستخرج أكبر قدر ممكن من الفوائد الحقيقية المهمة، وكل فائدة تكون جملة كاملة معبّرة مستقلة بمعناها تُفهم دون الرجوع للنص الأصلي، دون حشو أو تكرار أو فوائد سطحية.";
+const EXTRACT_USER_TMPL = "اقرأ النص التالي بدقة واستخرج منه الفوائد:\n1) خلاصة موجزة في سطرين إلى ثلاثة أسطر تعبر عن جوهر النص\n2) أكبر عدد ممكن من الفوائد المهمة (من 8 إلى 15 فائدة): كل فائدة جملة كاملة معبّرة مفيدة بذاتها، تغطي كل الأفكار الجديدة في النص دون تكرار\n3) أبرز اقتباس حرفي واحد إن وُجد\n\nأعد الإجابة بصيغة JSON فقط بهذا الشكل دون أي نص إضافي:\n{\"summary\": \"...\", \"benefits\": [\"...\", \"...\"], \"quote\": \"...\"}\n\nالنص:\n";
 
 function parseExtractionJSON(raw) {
   let s = raw.trim();
   s = s.replace(/^```(json)?/i, "").replace(/```$/g, "").trim();
   const start = s.indexOf("{");
   const end = s.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("no json");
+  if (start === -1 || end === -1) throw new Error("لم يعد الذكاء الاصطناعي بتنسيق JSON صحيح");
   const obj = JSON.parse(s.slice(start, end + 1));
-  if (!Array.isArray(obj.benefits) || !obj.benefits.length) throw new Error("no benefits");
+  if (!Array.isArray(obj.benefits) || !obj.benefits.length) throw new Error("لم يُستخرج أي فائدة من الرد");
   return { summary: String(obj.summary || ""), benefits: obj.benefits.map(String), quote: String(obj.quote || "") };
 }
 
@@ -479,20 +1383,28 @@ async function callMistral(key, userContent) {
     throw new Error("HTTP " + res.status + " — " + (res.status === 401 ? "المفتاح غير صالح" : res.status === 429 ? "تجاوزت حد الاستخدام، انتظر دقيقة ثم أعد المحاولة" : errText.slice(0, 140)));
   }
   const data = await res.json();
-  return parseExtractionJSON(data.choices[0].message.content);
+  if (!data.choices || !data.choices[0]) throw new Error("رد غير متوقع من الخدمة");
+  return data.choices[0].message.content;
 }
 
 async function extractBookAI() {
-  const text = document.getElementById("extract-input").value.trim();
-  const key = document.getElementById("ai-key").value.trim();
-  const progress = document.getElementById("extract-progress");
-  const box = document.getElementById("extract-result");
-  if (!key) { alert("أدخل مفتاح Mistral API أولاً — احصل عليه مجاناً من console.mistral.ai"); return; }
-  if (text.length < 500) { alert("النص قصير جداً — حمّل صفحات كافية من الكتاب (500 حرف فأكثر)."); return; }
+  const progress = el("extract-progress");
+  const box = el("extract-result");
+  const text = el("extract-input").value.trim();
+  const key = el("ai-key").value.trim();
+  if (!key) { alert("أدخل مفتاح Mistral API أولًا — احصل عليه مجانًا من console.mistral.ai"); return; }
+  if (text.length < 500) { alert("النص قصير جدًا — حمّل صفحات كافية من الكتاب (500 حرف فأكثر)."); return; }
   localStorage.setItem("khulasa_api_key", key);
 
   const chunks = chunkText(text, 22000);
-  if (chunks.length > 15) { alert("النص كبير جداً (" + chunks.length + " جزء) — قلّل عدد الصفحات أو استخرج على مراحل."); return; }
+  if (chunks.length > 30) { alert("النص كبير جدًا (" + chunks.length + " جزء) — قلّل عدد الصفحات أو استخرج على مراحل."); return; }
+
+  extractCancelled = false;
+  const btn = el("btn-cancel");
+  btn.style.display = "inline-block";
+  btn.disabled = false;
+  btn.textContent = "✖ إلغاء الاستخراج";
+  box.innerHTML = "";
 
   const allBenefits = [];
   let summary = "";
@@ -500,9 +1412,11 @@ async function extractBookAI() {
   const failed = [];
   try {
     for (let i = 0; i < chunks.length; i++) {
-      progress.innerHTML = `<div class="progress">🧾 الكناشة تقرأ الجزء ${i + 1} من ${chunks.length}... (الفوائد المستخرجة حتى الآن: ${allBenefits.length})</div>`;
+      if (extractCancelled) break;
+      setProgress((i / chunks.length) * 100, "🧾 الكناشة تقرأ الجزء " + (i + 1) + " من " + chunks.length + "... (الفوائد المستخرجة حتى الآن: " + allBenefits.length + ")");
+      await nextFrame();
       try {
-        const parsed = await callMistral(key, EXTRACT_USER_TMPL + chunks[i]);
+        const parsed = parseExtractionJSON(await callMistral(key, EXTRACT_USER_TMPL + chunks[i]));
         if (!summary && parsed.summary) summary = parsed.summary;
         if (!quote && parsed.quote) quote = parsed.quote;
         parsed.benefits.forEach(b => {
@@ -512,7 +1426,7 @@ async function extractBookAI() {
         failed.push(i + 1);
       }
     }
-    if (!allBenefits.length) throw new Error(failed.length ? "فشلت جميع الأجزاء — " + failed.join(",") : "لم يُستخرج أي فائدة");
+    if (!allBenefits.length) throw new Error(failed.length ? "فشلت جميع الأجزاء — السبب المرجّح: مفتاح غير صالح أو انقطاع الشبكة" : "لم يُستخرج أي فائدة");
     showExtraction({
       summary: summary || ("خلاصة شاملة لعدة أجزاء من الكتاب (" + chunks.length + " أجزاء)."),
       benefits: allBenefits,
@@ -521,18 +1435,21 @@ async function extractBookAI() {
       failed: failed
     }, "ذكي");
   } catch (err) {
-    box.innerHTML = `<div class="empty">تعذر الاستخراج الذكي: ${escapeHTML(String(err.message || err))}<br><br>جرّب الاستخراج السريع أو تحقق من المفتاح.</div>`;
+    box.innerHTML = '<div class="warn">تعذّر الاستخراج الذكي: ' + escapeHTML(String(err.message || err)) + "<br><br>جرّب الاستخراج السريع أو تحقق من المفتاح.</div>";
   } finally {
-    progress.innerHTML = "";
+    el("extract-progress").innerHTML = "";
+    btn.style.display = "none";
+    btn.disabled = false;
+    btn.textContent = "✖ إلغاء الاستخراج";
   }
 }
 
 const STOPWORDS = new Set(["في","من","على","إلى","عن","أن","إن","ما","لا","هو","هي","هم","كان","كانت","هذا","هذه","ذلك","التي","الذي","الذين","مع","كل","بين","أو","ثم","قد","بعد","قبل","حتى","لكن","إنه","أنه","عند","عندما","حيث","كما","ليس","ولا","أي","به","بها","له","لها","منه","منها","فيه","فيها","عليه","عليها","إذا","لم","لن","و","ف","ب","ل","ك","ي","the","is","and","of","to","in","that","it","for","on","with","as","are","was","be","this","have","from"]);
 
 function extractOffline() {
-  const text = document.getElementById("extract-input").value.trim();
-  const box = document.getElementById("extract-result");
-  if (text.length < 200) { alert("النص قصير جداً — حمّل صفحات كافية أو الصق نصاً أطول (200 حرف فأكثر)."); return; }
+  const text = el("extract-input").value.trim();
+  const box = el("extract-result");
+  if (text.length < 200) { alert("النص قصير جدًا — حمّل صفحات كافية أو الصق نصًا أطول (200 حرف فأكثر)."); return; }
   const sentences = text.replace(/\s+/g, " ").split(/(?<=[.!؟?])\s+/).map(s => s.trim()).filter(s => s.length > 25);
   if (sentences.length < 3) { alert("لم أتمكن من تقسيم النص إلى جمل — تأكد من وجود علامات ترقيم (. ؟ !)."); return; }
   const freq = {};
@@ -555,28 +1472,29 @@ function extractOffline() {
 
 function showExtraction(parsed, mode) {
   lastExtraction = parsed;
-  let html = `<div class="summary-output">`;
-  html += `<h3>🧾 نتائج الكناشة <span class="tag">وضع ${mode === "ذكي" ? "ذكي 🤖" : "سريع ⚡"}</span>${parsed.parts > 1 ? ` <span class="tag">${parsed.parts} أجزاء</span>` : ""}</h3>`;
-  if (parsed.summary) html += `<p><strong>الخلاصة:</strong> ${escapeHTML(parsed.summary)}</p>`;
-  html += `<h3>💡 الفوائد المستخرجة (${parsed.benefits.length})</h3><ol>`;
-  parsed.benefits.forEach(b => html += `<li>${escapeHTML(b)}</li>`);
-  html += `</ol>`;
-  if (parsed.quote) html += `<blockquote>${escapeHTML(parsed.quote)}</blockquote>`;
-  if (parsed.failed && parsed.failed.length) html += `<p style="color:var(--muted);font-size:.82rem;">ملاحظة: تعذّرت قراءة الأجزاء ${parsed.failed.join("، ")} — أعد المحاولة لاستكمالها.</p>`;
-  html += `</div>`;
-  document.getElementById("extract-result").innerHTML = html;
-  document.getElementById("extract-actions").style.display = "block";
+  let html = '<div class="summary-output">';
+  html += '<h3>🧾 نتائج الكناشة <span class="tag">وضع ' + (mode === "ذكي" ? "ذكي 🤖" : "سريع ⚡") + "</span>" + (parsed.parts > 1 ? ' <span class="tag">' + parsed.parts + " أجزاء</span>" : "") + "</h3>";
+  if (parsed.summary) html += "<p><strong>الخلاصة:</strong> " + escapeHTML(parsed.summary) + "</p>";
+  html += "<h3>💡 الفوائد المستخرجة (" + parsed.benefits.length + ')</h3><ol>';
+  parsed.benefits.forEach(b => html += "<li>" + escapeHTML(b) + "</li>");
+  html += "</ol>";
+  if (parsed.quote) html += "<blockquote>" + escapeHTML(parsed.quote) + "</blockquote>";
+  if (parsed.failed && parsed.failed.length) html += '<p style="color:var(--muted);font-size:.82rem;">ملاحظة: تعذّرت قراءة الأجزاء ' + parsed.failed.join("، ") + " — أعد المحاولة لاستكمالها.</p>";
+  html += "</div>";
+  el("extract-result").innerHTML = html;
+  el("extract-actions").style.display = "block";
 }
 
 function fillSummaryFromExtraction() {
   if (!lastExtraction) return;
   benefits = [...lastExtraction.benefits];
   quotes = lastExtraction.quote ? [lastExtraction.quote] : [];
-  if (lastExtraction.summary) document.getElementById("bk-idea").value = lastExtraction.summary;
+  if (lastExtraction.summary) el("bk-idea").value = lastExtraction.summary;
+  if (currentBook && !el("bk-title").value) el("bk-title").value = currentBook.name;
   renderList("benefits-list", benefits);
   renderList("quotes-list", quotes);
   document.querySelector('#tabs button[data-tab="summary"]').click();
-  document.getElementById("bk-title").focus();
+  el("bk-author").focus();
 }
 
 function makeCardsFromExtraction() {
@@ -589,41 +1507,37 @@ function makeCardsFromExtraction() {
   renderDeck();
 }
 
-/* ---------- توليد الخلاصة ---------- */
-function stars(n) { return "⭐".repeat(n); }
-function escapeHTML(s) {
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
+/* ================== توليد الخلاصة ================== */
 function generateSummary() {
-  const title = document.getElementById("bk-title").value.trim();
-  const author = document.getElementById("bk-author").value.trim();
-  const cat = document.getElementById("bk-cat").value;
-  const rating = parseInt(document.getElementById("bk-rating").value, 10);
-  const idea = document.getElementById("bk-idea").value.trim();
+  const title = el("bk-title").value.trim();
+  const author = el("bk-author").value.trim();
+  const cat = el("bk-cat").value;
+  const rating = parseInt(el("bk-rating").value, 10);
+  const idea = el("bk-idea").value.trim();
 
-  if (!title || !author) { alert("يرجى إدخال اسم الكتاب والمؤلف أولاً."); return; }
+  if (!title || !author) { alert("يرجى إدخال اسم الكتاب والمؤلف أولًا."); return; }
   if (benefits.length === 0) { alert("أضف فائدة واحدة على الأقل."); return; }
 
   lastSummary = { title, author, cat, rating, idea, benefits: [...benefits], quotes: [...quotes], date: new Date().toLocaleDateString("ar") };
 
-  let html = `<div class="summary-output">`;
-  html += `<h3>📖 ${escapeHTML(title)}</h3>`;
-  html += `<p class="meta">✍️ ${escapeHTML(author)} • ${escapeHTML(cat)} • <span class="rating">${stars(rating)}</span> • ${lastSummary.date}</p>`;
-  if (idea) html += `<p><strong>الفكرة العامة:</strong> ${escapeHTML(idea)}</p>`;
-  html += `<h3>💡 أبرز الفوائد</h3><ol>`;
-  benefits.forEach(b => html += `<li>${escapeHTML(b)}</li>`);
-  html += `</ol>`;
+  let html = '<div class="summary-output">';
+  html += "<h3>📖 " + escapeHTML(title) + "</h3>";
+  html += '<p class="meta">✍️ ' + escapeHTML(author) + " • " + escapeHTML(cat) + ' • <span class="rating">' + stars(rating) + "</span> • " + lastSummary.date + "</p>";
+  if (idea) html += "<p><strong>الفكرة العامة:</strong> " + escapeHTML(idea) + "</p>";
+  html += "<h3>💡 أبرز الفوائد</h3><ol>";
+  benefits.forEach(b => html += "<li>" + escapeHTML(b) + "</li>");
+  html += "</ol>";
   if (quotes.length) {
-    html += `<h3>❝ اقتباسات مختارة</h3>`;
-    quotes.forEach(q => html += `<blockquote>${escapeHTML(q)}</blockquote>`);
+    html += "<h3>❝ اقتباسات مختارة</h3>";
+    quotes.forEach(q => html += "<blockquote>" + escapeHTML(q) + "</blockquote>");
   }
-  html += `</div>`;
+  html += "</div>";
 
-  document.getElementById("summary-result").innerHTML = html;
-  document.getElementById("summary-actions").style.display = "block";
+  el("summary-result").innerHTML = html;
+  el("summary-actions").style.display = "block";
 }
 
-/* ---------- المكتبة ---------- */
+/* ================== مكتبتي (الخلاصات) ================== */
 function getLibrary() { return JSON.parse(localStorage.getItem("khulasa_library") || "[]"); }
 function setLibrary(arr) { localStorage.setItem("khulasa_library", JSON.stringify(arr)); }
 function saveSummary() {
@@ -636,9 +1550,9 @@ function saveSummary() {
 }
 function renderLibrary() {
   const lib = getLibrary();
-  const box = document.getElementById("library-list");
+  const box = el("library-list");
   if (!lib.length) {
-    box.innerHTML = `<div class="empty">مكتبتك فارغة — ولّد خلاصة واحفظها لتظهر هنا 🌱</div>`;
+    box.innerHTML = '<div class="empty">مكتبتك فارغة — ولّد خلاصة واحفظها لتظهر هنا 🌱</div>';
     return;
   }
   box.innerHTML = "";
@@ -647,13 +1561,13 @@ function renderLibrary() {
     div.className = "card";
     div.style.boxShadow = "none";
     div.style.border = "1.5px solid var(--line)";
-    let inner = `<h3>📖 ${escapeHTML(s.title)} <span class="tag">${escapeHTML(s.cat)}</span></h3>`;
-    inner += `<p class="meta" style="color:var(--muted);font-size:.9rem;">✍️ ${escapeHTML(s.author)} • <span class="rating">${stars(s.rating)}</span> • ${s.date}</p>`;
-    if (s.idea) inner += `<p style="margin-top:6px;">${escapeHTML(s.idea)}</p>`;
-    inner += `<p style="margin-top:6px;font-weight:600;">أبرز الفوائد (${s.benefits.length}):</p><ol>`;
-    s.benefits.forEach(b => inner += `<li>${escapeHTML(b)}</li>`);
-    inner += `</ol>`;
-    (s.quotes || []).forEach(q => inner += `<blockquote>${escapeHTML(q)}</blockquote>`);
+    let inner = "<h3>📖 " + escapeHTML(s.title) + ' <span class="tag">' + escapeHTML(s.cat) + "</span></h3>";
+    inner += '<p class="meta" style="color:var(--muted);font-size:.9rem;">✍️ ' + escapeHTML(s.author) + ' • <span class="rating">' + stars(s.rating) + "</span> • " + s.date + "</p>";
+    if (s.idea) inner += '<p style="margin-top:6px;">' + escapeHTML(s.idea) + "</p>";
+    inner += '<p style="margin-top:6px;font-weight:600;">أبرز الفوائد (' + s.benefits.length + '):</p><ol>';
+    s.benefits.forEach(b => inner += "<li>" + escapeHTML(b) + "</li>");
+    inner += "</ol>";
+    (s.quotes || []).forEach(q => inner += "<blockquote>" + escapeHTML(q) + "</blockquote>");
     div.innerHTML = inner;
     const del = document.createElement("button");
     del.className = "btn danger small no-print";
@@ -661,7 +1575,9 @@ function renderLibrary() {
     del.style.marginTop = "10px";
     del.onclick = () => {
       if (confirm("هل تريد حذف هذه الخلاصة؟")) {
-        lib.splice(i, 1); setLibrary(lib); renderLibrary();
+        lib.splice(i, 1);
+        setLibrary(lib);
+        renderLibrary();
       }
     };
     div.appendChild(del);
@@ -669,32 +1585,33 @@ function renderLibrary() {
   });
 }
 function clearLibrary() {
-  if (confirm("سيتم حذف جميع الخلاصات نهائياً. متابعة؟")) {
-    setLibrary([]); renderLibrary();
+  if (confirm("سيتم حذف جميع الخلاصات نهائيًا. متابعة؟")) {
+    setLibrary([]);
+    renderLibrary();
   }
 }
 
-/* ---------- البطاقات ---------- */
+/* ================== البطاقات ================== */
 function getCards() { return JSON.parse(localStorage.getItem("khulasa_cards") || "[]"); }
 function setCards(arr) { localStorage.setItem("khulasa_cards", JSON.stringify(arr)); }
 function addCard() {
-  const q = document.getElementById("fc-q").value.trim();
-  const a = document.getElementById("fc-a").value.trim();
+  const q = el("fc-q").value.trim();
+  const a = el("fc-a").value.trim();
   if (!q || !a) { alert("يرجى إدخال السؤال والإجابة."); return; }
   const arr = getCards();
   arr.push({ q, a });
   setCards(arr);
-  document.getElementById("fc-q").value = "";
-  document.getElementById("fc-a").value = "";
+  el("fc-q").value = "";
+  el("fc-a").value = "";
   deckIndex = arr.length - 1;
   renderDeck();
 }
 function renderDeck() {
   const arr = getCards();
-  const area = document.getElementById("deck-area");
-  const controls = document.getElementById("deck-controls");
+  const area = el("deck-area");
+  const controls = el("deck-controls");
   if (!arr.length) {
-    area.innerHTML = `<div class="empty">لا توجد بطاقات بعد — أنشئ بطاقتك الأولى ☝️</div>`;
+    area.innerHTML = '<div class="empty">لا توجد بطاقات بعد — أنشئ بطاقتك الأولى ☝️</div>';
     controls.innerHTML = "";
     return;
   }
@@ -726,7 +1643,9 @@ function shuffleDeck() {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  setCards(arr); deckIndex = 0; renderDeck();
+  setCards(arr);
+  deckIndex = 0;
+  renderDeck();
 }
 function deleteCard() {
   if (!confirm("حذف هذه البطاقة؟")) return;
@@ -737,11 +1656,13 @@ function deleteCard() {
   renderDeck();
 }
 
-/* ---------- التهيئة ---------- */
+/* ================== التهيئة ================== */
 const savedKey = localStorage.getItem("khulasa_api_key");
-if (savedKey) document.getElementById("ai-key").value = savedKey;
+if (savedKey) el("ai-key").value = savedKey;
 renderLibrary();
 renderDeck();
+renderBooks();
 </script>
 </body>
 </html>
+<!-- END-OF-FILE -->
