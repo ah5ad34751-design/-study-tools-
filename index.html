@@ -202,7 +202,7 @@
   <section id="tab-extractor">
     <div class="card">
       <h2>كناشة الفوائد</h2>
-      <p class="hint">ارفع كتابًا بصيغة PDF أو Word أو EPUB أو TXT، حدّد الصفحات أو الفصول، وستقرؤه الكناشة وتستخرج أكبر قدر ممكن من الفوائد الكاملة. تتم كل المعالجة في متصفحك ولا يُرفع الكتاب إلى أي خدمة خارجية.</p>
+      <p class="hint">ارفع كتابًا بصيغة PDF أو Word أو EPUB أو TXT، حدّد الصفحات أو الفصول، وستقرأه الكناشة وتستخرج أكبر قدر ممكن من الفوائد الكاملة. تتم كل المعالجة في متصفحك ولا يُرفع الكتاب إلى أي خدمة خارجية.</p>
 
       <label>1) ارفع ملف الكتاب</label>
       <div class="upload-box">
@@ -283,7 +283,7 @@
       <p id="char-count" style="color:var(--muted);font-size:.8rem;margin-top:4px;">0 حرف</p>
 
       <details style="margin-top:12px;">
-        <summary style="cursor:pointer;font-weight:600;color:var(--accent);">🔑 الاستخراج الذكي بالذكاء الاصطناعي (يحتاج مفتاحاً مجانياً)</summary>
+        <summary style="cursor:pointer;font-weight:600;color:var(--accent);">🔑 الاستخراج الذكي بالذكاء الاصطناعي (يحتاج مفتاحًا مجانيًا)</summary>
         <label for="ai-key">مفتاح Mistral API (يُحفظ في متصفحك فقط)</label>
         <div style="display:flex; gap:6px; align-items:center;">
           <input type="password" id="ai-key" placeholder="الصق مفتاحك هنا" style="flex:1;">
@@ -292,7 +292,7 @@
         <p style="color:var(--muted);font-size:.82rem;margin-top:4px;">
           احصل على مفتاح مجاني من
           <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>
-          — أنشئ حساباً، ثم API Keys ← Create new key. الكتاب نفسه لا يُرسل إلا النص المحدد إلى خدمة الذكاء الاصطناعي بموافقتك.
+          — أنشئ حسابًا، ثم API Keys ← Create new key. الكتاب نفسه لا يُرسل إلا النص المحدد إلى خدمة الذكاء الاصطناعي بموافقتك.
         </p>
         <button class="btn" onclick="extractBookAI()">🤖 استخراج شامل بالذكاء الاصطناعي</button>
       </details>
@@ -352,7 +352,7 @@
           <label for="bk-rating">تقييمك للكتاب</label>
           <select id="bk-rating">
             <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
-            <option value="4">⭐⭐⭐⭐ جيد جداً</option>
+            <option value="4">⭐⭐⭐⭐ جيد جدًا</option>
             <option value="3">⭐⭐⭐ جيد</option>
             <option value="2">⭐⭐ مقبول</option>
             <option value="1">⭐ ضعيف</option>
@@ -781,7 +781,7 @@ function updateChInputs() {
 
 function parsePageList(str, total) {
   const nums = new Set();
-  str.split(/[،\s]+/).forEach(t => {
+  str.split(/[,،\s]+/).forEach(t => {
     const n = parseInt(t, 10);
     if (!isNaN(n) && n >= 1 && (!total || n <= total)) nums.add(n);
   });
@@ -832,7 +832,7 @@ async function pdfPageText(pdf, p) {
   const vp = page.getViewport({ scale: 1 });
   let arCount = 0, latCount = 0;
   for (const it of tc.items) {
-    const ar = it.str.match(/[\u0600-\u06FF]/g);
+    const ar = it.str.match(/[\u0600-\u06ff]/g);
     if (ar) arCount += ar.length;
     const la = it.str.match(/[A-Za-z]/g);
     if (la) latCount += la.length;
@@ -854,7 +854,7 @@ async function pdfPageText(pdf, p) {
   lines.sort((a, b) => b.y - a.y);
   const body = [];
   const notes = [];
-  const pageNumRe = /^[\d\u0660-\u0669\u06F0-\u06F9\s.,\u066B\u066C-]+$/;
+  const pageNumRe = /^[\d\u0660-\u0669\u06f0-\u06f9\s.,\u066b\u066c-]+$/;
   for (const l of lines) {
     const ordered = l.parts.slice().sort((a, b) => rtl ? b.x - a.x : a.x - b.x);
     let lineText = "";
@@ -862,10 +862,10 @@ async function pdfPageText(pdf, p) {
       if (!j) { lineText = ordered[0].str; continue; }
       const prev = ordered[j - 1], cur = ordered[j];
       const gap = rtl ? (prev.x - (cur.x + cur.w)) : (cur.x - (prev.x + prev.w));
-      const isDiacritic = cur.w === 0 && /[\u064B-\u0652\u0670]/.test(cur.str);
+      const isDiacritic = cur.w === 0 && /[\u064b-\u0652\u0670]/.test(cur.str);
       lineText += (isDiacritic ? "" : (gap > cur.h * 0.18 ? " " : "")) + cur.str;
     }
-    lineText = lineText.replace(/\s+/g, " ").replace(/\s+([\u064B-\u0652\u0670])/g, "$1").replace(/[\u200e\u200f\ufeff]/g, "").trim();
+    lineText = lineText.replace(/\s+/g, " ").replace(/\s+([\u064b-\u0652\u0670])/g, "$1").replace(/[\u200e\u200f\ufeff]/g, "").trim();
     if (!lineText) continue;
     if (pageNumRe.test(lineText)) continue;
     if (l.h < med * 0.82 && l.y < vp.height * 0.22) notes.push(lineText);
@@ -1192,7 +1192,7 @@ function renderBooks() {
     const div = document.createElement("div");
     div.className = "book-item";
     let inner = "<h3>📖 " + escapeHTML(b.name) + ' <span class="tag">' + fmtLabel(b.format) + "</span>" + (b.category && b.category !== "أخرى" ? ' <span class="tag">' + escapeHTML(b.category) + "</span>" : "") + "</h3>";
-    inner += '<p class="meta">💾 ' + formatBytes(b.size || 0) + (b.totalPages ? " • 📑 " + b.totalPages.toLocaleString("ar") + (b.format === "pdf" ? " صفحة" : " فصل") : "") +
+    inner += '<p class="meta">💾 ' + formatBytes(b.size || 0) + (b.totalPages ? " • 🔖 " + b.totalPages.toLocaleString("ar") + (b.format === "pdf" ? " صفحة" : " فصل") : "") +
       (b.lastPage ? ' • ✅ آخر صفحة وصلت إليها: <strong>' + b.lastPage.toLocaleString("ar") + "</strong>" : "") +
       " • 🕒 آخر عمل: " + new Date(b.updated || b.added).toLocaleDateString("ar") + "</p>";
     div.innerHTML = inner;
@@ -1333,7 +1333,7 @@ function parseExtractionJSON(raw) {
 }
 
 function normalizeForDedupe(s) {
-  return s.toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/^(ال|وال|بال|فال|كال|لل)/, "").replace(/[^\u0600-\u06FFa-z0-9 ]/g, "").trim();
+  return s.toLowerCase().replace(/[\u064b-\u0652\u0640]/g, "").replace(/^(ال|وال|بال|فال|كال|لل)/, "").replace(/[^\u0600-\u06ffa-z0-9 ]/g, "").trim();
 }
 function isDuplicate(benefit, existing) {
   const words = new Set(normalizeForDedupe(benefit).split(/\s+/).filter(w => w.length > 2));
@@ -1391,7 +1391,7 @@ async function extractBookAI() {
   const progress = el("extract-progress");
   const box = el("extract-result");
   const text = el("extract-input").value.trim();
-  const key = el("ai-key").value.trim();
+  const key = el("ai-key").value.replace(/[\s\u200b-\u200f\ufeff]/g, "");
   if (!key) { alert("أدخل مفتاح Mistral API أولًا — احصل عليه مجانًا من console.mistral.ai"); return; }
   if (text.length < 500) { alert("النص قصير جدًا — حمّل صفحات كافية من الكتاب (500 حرف فأكثر)."); return; }
   localStorage.setItem("khulasa_api_key", key);
@@ -1408,7 +1408,7 @@ async function extractBookAI() {
 
   const allBenefits = [];
   let summary = "";
-  let quote = "";
+  let quote = "", firstError = "";
   const failed = [];
   try {
     for (let i = 0; i < chunks.length; i++) {
@@ -1416,17 +1416,31 @@ async function extractBookAI() {
       setProgress((i / chunks.length) * 100, "🧾 الكناشة تقرأ الجزء " + (i + 1) + " من " + chunks.length + "... (الفوائد المستخرجة حتى الآن: " + allBenefits.length + ")");
       await nextFrame();
       try {
-        const parsed = parseExtractionJSON(await callMistral(key, EXTRACT_USER_TMPL + chunks[i]));
+        let parsed = null, lastErr = null;
+        for (let attempt = 0; attempt < 2 && !extractCancelled; attempt++) {
+          try {
+            parsed = parseExtractionJSON(await callMistral(key, EXTRACT_USER_TMPL + chunks[i]));
+            break;
+          } catch (retryErr) {
+            lastErr = retryErr;
+            if (!attempt && /HTTP 429/.test(String((retryErr && retryErr.message) || retryErr))) {
+              setProgress((i / chunks.length) * 100, "⏳ تجاوزت حد الطلبات — انتظار 20 ثانية ثم إعادة المحاولة...");
+              await new Promise(r => setTimeout(r, 20000));
+            } else break;
+          }
+        }
+        if (!parsed) throw (lastErr || new Error("أُلغي الاستخراج"));
         if (!summary && parsed.summary) summary = parsed.summary;
         if (!quote && parsed.quote) quote = parsed.quote;
         parsed.benefits.forEach(b => {
           if (b && b.length > 15 && !isDuplicate(b, allBenefits)) allBenefits.push(b);
         });
       } catch (chunkErr) {
+        if (!firstError) firstError = String((chunkErr && chunkErr.message) || chunkErr);
         failed.push(i + 1);
       }
     }
-    if (!allBenefits.length) throw new Error(failed.length ? "فشلت جميع الأجزاء — السبب المرجّح: مفتاح غير صالح أو انقطاع الشبكة" : "لم يُستخرج أي فائدة");
+    if (!allBenefits.length) throw new Error("فشلت " + failed.length + " أجزاء — سبب أول جزء: " + firstError);
     showExtraction({
       summary: summary || ("خلاصة شاملة لعدة أجزاء من الكتاب (" + chunks.length + " أجزاء)."),
       benefits: allBenefits,
@@ -1479,7 +1493,7 @@ function showExtraction(parsed, mode) {
   parsed.benefits.forEach(b => html += "<li>" + escapeHTML(b) + "</li>");
   html += "</ol>";
   if (parsed.quote) html += "<blockquote>" + escapeHTML(parsed.quote) + "</blockquote>";
-  if (parsed.failed && parsed.failed.length) html += '<p style="color:var(--muted);font-size:.82rem;">ملاحظة: تعذّرت قراءة الأجزاء ' + parsed.failed.join("، ") + " — أعد المحاولة لاستكمالها.</p>";
+  if (parsed.failed && parsed.failed.length) html += '<p style="color:var(--muted);font-size:.82rem;">ملحوظة: تعذّرت قراءة الأجزاء ' + parsed.failed.join("، ") + " — أعد المحاولة لاستكمالها.</p>";
   html += "</div>";
   el("extract-result").innerHTML = html;
   el("extract-actions").style.display = "block";
