@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>خُلاصة — أدوات الدراسة واستخراج الفوائد</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --bg: #f6f4ef;
@@ -58,7 +59,7 @@
   .card h2 { font-size: 1.25rem; margin-bottom: 4px; }
   .card > p.hint { color: var(--muted); font-size: .9rem; margin-bottom: 16px; }
   label { display: block; font-weight: 600; font-size: .9rem; margin: 12px 0 4px; }
-  input[type="text"], textarea, select {
+  input[type="text"], input[type="number"], textarea, select {
     width: 100%; border: 1.5px solid var(--line); border-radius: 10px;
     padding: 10px 12px; font: inherit; background: #fbfaf7; color: var(--ink);
   }
@@ -101,6 +102,18 @@
     border-inline-start: 4px solid var(--gold); background: #fdf8ee;
     padding: 8px 14px; border-radius: 8px; margin: 8px 0; font-style: italic;
   }
+  .upload-box {
+    border: 2px dashed var(--accent); border-radius: var(--radius);
+    background: var(--accent-soft); padding: 18px; text-align: center; margin-top: 10px;
+  }
+  .upload-box input[type="file"] { margin-top: 8px; font: inherit; }
+  .file-info { color: var(--muted); font-size: .85rem; margin-top: 8px; min-height: 1.4em; }
+  .pg-range { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px; }
+  .pg-range > div { flex: 1; min-width: 120px; }
+  .progress {
+    background: var(--accent-soft); border-radius: 10px; padding: 12px 16px;
+    margin-top: 14px; font-weight: 600; color: var(--accent);
+  }
   .flashcard {
     perspective: 1000px; height: 220px; margin-top: 18px; cursor: pointer;
   }
@@ -135,27 +148,77 @@
 </head>
 <body>
 
-
 <header>
   <h1>📚 خُلاصة</h1>
-  <p>أدوات الدراسة: استخرج الفوائد، لخّص الكتب، وراجع ببطاقات ذكية</p>
+  <p>أدوات الدراسة: ارفع الكتاب، استخرج الفوائد، لخّص، وراجع ببطاقات ذكية</p>
 </header>
-
 
 <div class="wrap">
   <nav class="tabs" id="tabs">
+    <button data-tab="extractor">🧾 كناشة الفوائد</button>
     <button data-tab="summary" class="active">📝 خلاصة الكتاب</button>
     <button data-tab="cards">🎴 بطاقات المراجعة</button>
     <button data-tab="library">📚 مكتبتي</button>
   </nav>
 
+  <!-- ============ كناشة الفوائد ============ -->
+  <section id="tab-extractor">
+    <div class="card">
+      <h2>كناشة الفوائد</h2>
+      <p class="hint">ارفع ملف الكتاب (PDF أو TXT)، حدّد نطاق الصفحات، والكناشة تقرأه وتستخرج أكبر قدر ممكن من الفوائد الكاملة.</p>
+
+      <label>1) ارفع ملف الكتاب</label>
+      <div class="upload-box">
+        <div>📗 اختر ملف PDF أو TXT من جهازك</div>
+        <input type="file" id="book-file" accept=".pdf,.txt">
+        <p class="file-info" id="file-info">لم يتم اختيار ملف بعد</p>
+        <div class="pg-range" id="pg-range" style="display:none;">
+          <div>
+            <label for="pg-from">من صفحة</label>
+            <input type="number" id="pg-from" value="1" min="1">
+          </div>
+          <div>
+            <label for="pg-to">إلى صفحة</label>
+            <input type="number" id="pg-to" value="10" min="1">
+          </div>
+          <div style="flex:0;">
+            <button class="btn small" onclick="loadBookFile()">📖 تحميل النص</button>
+          </div>
+        </div>
+      </div>
+
+      <label for="extract-input">2) النص (يُملأ تلقائياً من الملف، أو الصق النص يدوياً)</label>
+      <textarea id="extract-input" style="min-height:140px;" placeholder="سيظهر هنا نص الصفحات المحددة بعد تحميل الملف... أو الصق أي نص تريد استخراج الفوائد منه"></textarea>
+      <p id="char-count" style="color:var(--muted);font-size:.8rem;margin-top:4px;">0 حرف</p>
+
+      <details style="margin-top:12px;">
+        <summary style="cursor:pointer;font-weight:600;color:var(--accent);">🔑 الاستخراج الذكي بالذكاء الاصطناعي (يحتاج مفتاحاً مجانياً)</summary>
+        <label for="ai-key">مفتاح Mistral API (يُحفظ في متصفحك فقط)</label>
+        <input type="text" id="ai-key" placeholder="الصق مفتاحك هنا">
+        <p style="color:var(--muted);font-size:.82rem;margin-top:4px;">
+          احصل على مفتاح مجاني من
+          <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai/api-keys</a>
+          — أنشئ حساباً، ثم API Keys ← Create new key.
+        </p>
+        <button class="btn" onclick="extractBookAI()">🤖 استخراج شامل بالذكاء الاصطناعي</button>
+      </details>
+
+      <button class="btn secondary" onclick="extractOffline()">⚡ استخراج سريع (بدون إنترنت)</button>
+
+      <div id="extract-progress"></div>
+      <div id="extract-result"></div>
+      <div id="extract-actions" style="display:none;" class="no-print">
+        <button class="btn" onclick="fillSummaryFromExtraction()">📝 تحويلها إلى خلاصة محفوظة</button>
+        <button class="btn secondary" onclick="makeCardsFromExtraction()">🎴 تحويل الفوائد إلى بطاقات مراجعة</button>
+      </div>
+    </div>
+  </section>
 
   <!-- ============ خلاصة الكتاب ============ -->
   <section id="tab-summary" class="visible">
     <div class="card">
       <h2>مستخرج الفوائد وخلاصة الكتاب</h2>
       <p class="hint">املأ الحقول ثم أضف الفوائد والاقتباسات، وسيتم توليد خلاصة منسّقة جاهزة للحفظ والطباعة.</p>
-
 
       <div class="row">
         <div>
@@ -194,7 +257,6 @@
       <label for="bk-idea">الفكرة العامة للكتاب (سطر أو سطران)</label>
       <textarea id="bk-idea" placeholder="ما الرسالة الأساسية التي يريد المؤلف إيصالها؟"></textarea>
 
-
       <label for="benefit-input">أضف فائدة مستفادة</label>
       <div style="display:flex; gap:10px;">
         <input type="text" id="benefit-input" placeholder="اكتب فائدة ثم اضغط إضافة أو Enter">
@@ -202,14 +264,12 @@
       </div>
       <div id="benefits-list"></div>
 
-
       <label for="quote-input">أضف اقتباساً من الكتاب (اختياري)</label>
       <div style="display:flex; gap:10px;">
         <input type="text" id="quote-input" placeholder="اكتب الاقتباس ثم اضغط إضافة أو Enter">
         <button class="btn small" onclick="addQuote()">إضافة</button>
       </div>
       <div id="quotes-list"></div>
-
 
       <button class="btn" onclick="generateSummary()">✨ توليد الخلاصة</button>
       <div id="summary-result"></div>
@@ -220,13 +280,11 @@
     </div>
   </section>
 
-
   <!-- ============ بطاقات المراجعة ============ -->
   <section id="tab-cards">
     <div class="card">
       <h2>بطاقات المراجعة (Flashcards)</h2>
       <p class="hint">أنشئ بطاقة بسؤال وجواب، ثم راجعها بالنقر على البطاقة لكشف الإجابة.</p>
-
 
       <label for="fc-q">السؤال</label>
       <input type="text" id="fc-q" placeholder="مثال: ما هو التسمين الإلكتروني في الذكاء الاصطناعي؟">
@@ -234,12 +292,10 @@
       <textarea id="fc-a" placeholder="اكتب الإجابة هنا"></textarea>
       <button class="btn" onclick="addCard()">➕ إضافة بطاقة</button>
 
-
       <div id="deck-area"></div>
       <div class="flash-controls no-print" style="margin-top:14px;" id="deck-controls"></div>
     </div>
   </section>
-
 
   <!-- ============ مكتبتي ============ -->
   <section id="tab-library">
@@ -252,17 +308,17 @@
   </section>
 </div>
 
-
 <footer>خُلاصة — أداة مجانية للدراسة واستخراج الفوائد | بياناتك محفوظة في متصفحك فقط</footer>
 
-
 <script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
 let benefits = [];
 let quotes = [];
 let cards = [];
 let deckIndex = 0;
 let lastSummary = null;
-
+let lastExtraction = null;
 
 /* ---------- التبويبات ---------- */
 document.getElementById("tabs").addEventListener("click", (e) => {
@@ -274,6 +330,47 @@ document.getElementById("tabs").addEventListener("click", (e) => {
   document.getElementById("tab-" + btn.dataset.tab).classList.add("visible");
 });
 
+/* ---------- قراءة ملف الكتاب ---------- */
+document.getElementById("book-file").addEventListener("change", () => {
+  const f = document.getElementById("book-file").files[0];
+  document.getElementById("file-info").textContent = f ? "📁 " + f.name + " — اضغط «تحميل النص» بعد تحديد الصفحات" : "لم يتم اختيار ملف بعد";
+  document.getElementById("pg-range").style.display = f && f.name.toLowerCase().endsWith(".pdf") ? "flex" : "none";
+});
+
+async function loadBookFile() {
+  const file = document.getElementById("book-file").files[0];
+  const info = document.getElementById("file-info");
+  if (!file) { alert("اختر ملف الكتاب أولاً."); return; }
+  try {
+    if (file.name.toLowerCase().endsWith(".txt")) {
+      const text = await file.text();
+      fillExtractBox(text, "✅ تم تحميل " + file.name + " — " + text.length.toLocaleString("ar") + " حرف");
+      return;
+    }
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const total = pdf.numPages;
+    const from = Math.max(1, parseInt(document.getElementById("pg-from").value, 10) || 1);
+    const to = Math.min(total, parseInt(document.getElementById("pg-to").value, 10) || Math.min(10, total));
+    if (from > to) { alert("نطاق الصفحات غير صحيح: «من» أكبر من «إلى»."); return; }
+    let text = "";
+    for (let p = from; p <= to; p++) {
+      info.textContent = "⏳ قراءة الصفحة " + p + " من " + to + "...";
+      const page = await pdf.getPage(p);
+      const tc = await page.getTextContent();
+      text += tc.items.map(i => i.str).join(" ").replace(/\s+/g, " ") + "\n\n";
+    }
+    fillExtractBox(text, "✅ تم استخراج نص الصفحات " + from + " إلى " + to + " (الكتاب " + total + " صفحة) — " + text.length.toLocaleString("ar") + " حرف");
+  } catch (err) {
+    info.textContent = "❌ تعذر قراءة الملف — إن كان PDF ممسوحاً ضوئياً (صور) فلن يُستخرج نصه. جرّب كتاباً نصياً.";
+  }
+}
+
+function fillExtractBox(text, msg) {
+  document.getElementById("extract-input").value = text;
+  document.getElementById("extract-input").dispatchEvent(new Event("input"));
+  document.getElementById("file-info").textContent = msg;
+}
 
 /* ---------- الفوائد ---------- */
 function addBenefit() {
@@ -312,11 +409,190 @@ function renderList(id, arr) {
 document.getElementById("benefit-input").addEventListener("keydown", e => { if (e.key === "Enter") addBenefit(); });
 document.getElementById("quote-input").addEventListener("keydown", e => { if (e.key === "Enter") addQuote(); });
 
+/* ---------- كناشة الفوائد ---------- */
+const EXTRACT_SYS = "أنت كناشة فوائد محترف متخصص في قراءة الكتب واستخراج الفوائد بالعربية الفصحى الواضحة. تتحرى الدقة والشمول: تستخرج أكبر قدر ممكن من الفوائد الحقيقية المهمة، وكل فائدة تكون جملة كاملة معبّرة مستقلة بمعناها تُفهم دون الرجوع للنص الأصلي، دون حشو أو تكرار أو فوائد سطحة.";
+const EXTRACT_USER_TMPL = "اقرأ النص التالي بدقة واستخرج منه الفوائد:\n1) خلاصة موجزة في سطرين إلى ثلاثة أسطر تعبر عن جوهر النص\n2) أكبر عدد ممكن من الفوائد المهمة (من 8 إلى 15 فائدة): كل فائدة جملة كاملة معبّرة مفيدة بذاتها، تغطي كل الأفكار الجديدة في النص دون تكرار\n3) أبرز اقتباس حرفي واحد إن وُجد\n\nأعد الإجابة بصيغة JSON فقط بهذا الشكل دون أي نص إضافي:\n{\"summary\": \"...\", \"benefits\": [\"...\", \"...\"], \"quote\": \"...\"}\n\nالنص:\n";
+
+document.getElementById("extract-input").addEventListener("input", (e) => {
+  document.getElementById("char-count").textContent = e.target.value.length.toLocaleString("ar") + " حرف";
+});
+
+function parseExtractionJSON(raw) {
+  let s = raw.trim();
+  s = s.replace(/^```(json)?/i, "").replace(/```$/g, "").trim();
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start === -1 || end === -1) throw new Error("no json");
+  const obj = JSON.parse(s.slice(start, end + 1));
+  if (!Array.isArray(obj.benefits) || !obj.benefits.length) throw new Error("no benefits");
+  return { summary: String(obj.summary || ""), benefits: obj.benefits.map(String), quote: String(obj.quote || "") };
+}
+
+function normalizeForDedupe(s) {
+  return s.toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/^(ال|وال|بال|فال|كال|لل)/, "").replace(/[^\u0600-\u06FFa-z0-9 ]/g, "").trim();
+}
+function isDuplicate(benefit, existing) {
+  const words = new Set(normalizeForDedupe(benefit).split(/\s+/).filter(w => w.length > 2));
+  if (!words.size) return true;
+  for (const ex of existing) {
+    const exWords = new Set(normalizeForDedupe(ex).split(/\s+/).filter(w => w.length > 2));
+    let inter = 0;
+    words.forEach(w => { if (exWords.has(w)) inter++; });
+    const jac = inter / (words.size + exWords.size - inter);
+    if (jac > 0.5) return true;
+  }
+  return false;
+}
+
+function chunkText(text, size) {
+  const chunks = [];
+  let cur = 0;
+  while (cur < text.length) {
+    let end = Math.min(cur + size, text.length);
+    if (end < text.length) {
+      const dot = text.lastIndexOf(".", end);
+      const q = text.lastIndexOf("؟", end);
+      const cut = Math.max(dot, q);
+      if (cut > cur + size * 0.5) end = cut + 1;
+    }
+    chunks.push(text.slice(cur, end).trim());
+    cur = end;
+  }
+  return chunks.filter(c => c.length > 100);
+}
+
+async function callMistral(key, userContent) {
+  const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json", "Authorization": "Bearer " + key },
+    body: JSON.stringify({
+      model: "mistral-small-latest",
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: EXTRACT_SYS },
+        { role: "user", content: userContent }
+      ]
+    })
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error("HTTP " + res.status + " — " + (res.status === 401 ? "المفتاح غير صالح" : res.status === 429 ? "تجاوزت حد الاستخدام، انتظر دقيقة ثم أعد المحاولة" : errText.slice(0, 140)));
+  }
+  const data = await res.json();
+  return parseExtractionJSON(data.choices[0].message.content);
+}
+
+async function extractBookAI() {
+  const text = document.getElementById("extract-input").value.trim();
+  const key = document.getElementById("ai-key").value.trim();
+  const progress = document.getElementById("extract-progress");
+  const box = document.getElementById("extract-result");
+  if (!key) { alert("أدخل مفتاح Mistral API أولاً — احصل عليه مجاناً من console.mistral.ai"); return; }
+  if (text.length < 500) { alert("النص قصير جداً — حمّل صفحات كافية من الكتاب (500 حرف فأكثر)."); return; }
+  localStorage.setItem("khulasa_api_key", key);
+
+  const chunks = chunkText(text, 22000);
+  if (chunks.length > 15) { alert("النص كبير جداً (" + chunks.length + " جزء) — قلّل عدد الصفحات أو استخرج على مراحل."); return; }
+
+  const allBenefits = [];
+  let summary = "";
+  let quote = "";
+  const failed = [];
+  try {
+    for (let i = 0; i < chunks.length; i++) {
+      progress.innerHTML = `<div class="progress">🧾 الكناشة تقرأ الجزء ${i + 1} من ${chunks.length}... (الفوائد المستخرجة حتى الآن: ${allBenefits.length})</div>`;
+      try {
+        const parsed = await callMistral(key, EXTRACT_USER_TMPL + chunks[i]);
+        if (!summary && parsed.summary) summary = parsed.summary;
+        if (!quote && parsed.quote) quote = parsed.quote;
+        parsed.benefits.forEach(b => {
+          if (b && b.length > 15 && !isDuplicate(b, allBenefits)) allBenefits.push(b);
+        });
+      } catch (chunkErr) {
+        failed.push(i + 1);
+      }
+    }
+    if (!allBenefits.length) throw new Error(failed.length ? "فشلت جميع الأجزاء — " + failed.join(",") : "لم يُستخرج أي فائدة");
+    showExtraction({
+      summary: summary || ("خلاصة شاملة لعدة أجزاء من الكتاب (" + chunks.length + " أجزاء)."),
+      benefits: allBenefits,
+      quote: quote,
+      parts: chunks.length,
+      failed: failed
+    }, "ذكي");
+  } catch (err) {
+    box.innerHTML = `<div class="empty">تعذر الاستخراج الذكي: ${escapeHTML(String(err.message || err))}<br><br>جرّب الاستخراج السريع أو تحقق من المفتاح.</div>`;
+  } finally {
+    progress.innerHTML = "";
+  }
+}
+
+const STOPWORDS = new Set(["في","من","على","إلى","عن","أن","إن","ما","لا","هو","هي","هم","كان","كانت","هذا","هذه","ذلك","التي","الذي","الذين","مع","كل","بين","أو","ثم","قد","بعد","قبل","حتى","لكن","إنه","أنه","عند","عندما","حيث","كما","ليس","ولا","أي","به","بها","له","لها","منه","منها","فيه","فيها","عليه","عليها","إذا","لم","لن","و","ف","ب","ل","ك","ي","the","is","and","of","to","in","that","it","for","on","with","as","are","was","be","this","have","from"]);
+
+function extractOffline() {
+  const text = document.getElementById("extract-input").value.trim();
+  const box = document.getElementById("extract-result");
+  if (text.length < 200) { alert("النص قصير جداً — حمّل صفحات كافية أو الصق نصاً أطول (200 حرف فأكثر)."); return; }
+  const sentences = text.replace(/\s+/g, " ").split(/(?<=[.!؟?])\s+/).map(s => s.trim()).filter(s => s.length > 25);
+  if (sentences.length < 3) { alert("لم أتمكن من تقسيم النص إلى جمل — تأكد من وجود علامات ترقيم (. ؟ !)."); return; }
+  const freq = {};
+  sentences.forEach(s => s.split(/[\s،؛:()\[\]"«»'-]+/).forEach(w => {
+    const k = w.replace(/^(ال|وال|بال|فال|كال|لل)/, "");
+    if (k.length > 2 && !STOPWORDS.has(k) && !STOPWORDS.has(w)) freq[k] = (freq[k] || 0) + 1;
+  }));
+  const scored = sentences.map((s, i) => {
+    let sc = 0;
+    s.split(/[\s،؛:()\[\]"«»'-]+/).forEach(w => {
+      const k = w.replace(/^(ال|وال|بال|فال|كال|لل)/, "");
+      if (freq[k]) sc += freq[k];
+    });
+    return { s, sc: sc / Math.sqrt(s.length), i };
+  });
+  const topN = Math.min(Math.max(Math.round(sentences.length * 0.15), 5), 20);
+  const picked = scored.sort((a, b) => b.sc - a.sc).slice(0, topN).sort((a, b) => a.i - b.i);
+  showExtraction({ summary: "استخراج سريع: أهم الجمل الواردة في النص مرتبة حسب تسلسلها.", benefits: picked.map(p => p.s), quote: "" }, "سريع");
+}
+
+function showExtraction(parsed, mode) {
+  lastExtraction = parsed;
+  let html = `<div class="summary-output">`;
+  html += `<h3>🧾 نتائج الكناشة <span class="tag">وضع ${mode === "ذكي" ? "ذكي 🤖" : "سريع ⚡"}</span>${parsed.parts > 1 ? ` <span class="tag">${parsed.parts} أجزاء</span>` : ""}</h3>`;
+  if (parsed.summary) html += `<p><strong>الخلاصة:</strong> ${escapeHTML(parsed.summary)}</p>`;
+  html += `<h3>💡 الفوائد المستخرجة (${parsed.benefits.length})</h3><ol>`;
+  parsed.benefits.forEach(b => html += `<li>${escapeHTML(b)}</li>`);
+  html += `</ol>`;
+  if (parsed.quote) html += `<blockquote>${escapeHTML(parsed.quote)}</blockquote>`;
+  if (parsed.failed && parsed.failed.length) html += `<p style="color:var(--muted);font-size:.82rem;">ملاحظة: تعذّرت قراءة الأجزاء ${parsed.failed.join("، ")} — أعد المحاولة لاستكمالها.</p>`;
+  html += `</div>`;
+  document.getElementById("extract-result").innerHTML = html;
+  document.getElementById("extract-actions").style.display = "block";
+}
+
+function fillSummaryFromExtraction() {
+  if (!lastExtraction) return;
+  benefits = [...lastExtraction.benefits];
+  quotes = lastExtraction.quote ? [lastExtraction.quote] : [];
+  if (lastExtraction.summary) document.getElementById("bk-idea").value = lastExtraction.summary;
+  renderList("benefits-list", benefits);
+  renderList("quotes-list", quotes);
+  document.querySelector('#tabs button[data-tab="summary"]').click();
+  document.getElementById("bk-title").focus();
+}
+
+function makeCardsFromExtraction() {
+  if (!lastExtraction || !lastExtraction.benefits.length) return;
+  const arr = getCards();
+  lastExtraction.benefits.forEach((b, i) => arr.push({ q: "الفائدة رقم " + (i + 1) + " — اذكرها أو علّق عليها", a: b }));
+  setCards(arr);
+  deckIndex = arr.length - 1;
+  document.querySelector('#tabs button[data-tab="cards"]').click();
+  renderDeck();
+}
 
 /* ---------- توليد الخلاصة ---------- */
 function stars(n) { return "⭐".repeat(n); }
 function escapeHTML(s) {
-  return s.replace(/&/g,"&").replace(/</g,"<").replace(/>/g,">");
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 function generateSummary() {
   const title = document.getElementById("bk-title").value.trim();
@@ -325,17 +601,14 @@ function generateSummary() {
   const rating = parseInt(document.getElementById("bk-rating").value, 10);
   const idea = document.getElementById("bk-idea").value.trim();
 
-
   if (!title || !author) { alert("يرجى إدخال اسم الكتاب والمؤلف أولاً."); return; }
   if (benefits.length === 0) { alert("أضف فائدة واحدة على الأقل."); return; }
 
-
   lastSummary = { title, author, cat, rating, idea, benefits: [...benefits], quotes: [...quotes], date: new Date().toLocaleDateString("ar") };
-
 
   let html = `<div class="summary-output">`;
   html += `<h3>📖 ${escapeHTML(title)}</h3>`;
-  html += `<p class="meta">✍️ ${escapeHTML(author)} • {stars(rating)}</span> • ${lastSummary.date}</p>`;
+  html += `<p class="meta">✍️ ${escapeHTML(author)} • ${escapeHTML(cat)} • <span class="rating">${stars(rating)}</span> • ${lastSummary.date}</p>`;
   if (idea) html += `<p><strong>الفكرة العامة:</strong> ${escapeHTML(idea)}</p>`;
   html += `<h3>💡 أبرز الفوائد</h3><ol>`;
   benefits.forEach(b => html += `<li>${escapeHTML(b)}</li>`);
@@ -346,11 +619,9 @@ function generateSummary() {
   }
   html += `</div>`;
 
-
   document.getElementById("summary-result").innerHTML = html;
   document.getElementById("summary-actions").style.display = "block";
 }
-
 
 /* ---------- المكتبة ---------- */
 function getLibrary() { return JSON.parse(localStorage.getItem("khulasa_library") || "[]"); }
@@ -376,8 +647,8 @@ function renderLibrary() {
     div.className = "card";
     div.style.boxShadow = "none";
     div.style.border = "1.5px solid var(--line)";
-    let inner = `<h3>📖 {escapeHTML(s.cat)}</span></h3>`;
-    inner += `<p class="meta" style="color:var(--muted);font-size:.9rem;">✍️ {stars(s.rating)}</span> • ${s.date}</p>`;
+    let inner = `<h3>📖 ${escapeHTML(s.title)} <span class="tag">${escapeHTML(s.cat)}</span></h3>`;
+    inner += `<p class="meta" style="color:var(--muted);font-size:.9rem;">✍️ ${escapeHTML(s.author)} • <span class="rating">${stars(s.rating)}</span> • ${s.date}</p>`;
     if (s.idea) inner += `<p style="margin-top:6px;">${escapeHTML(s.idea)}</p>`;
     inner += `<p style="margin-top:6px;font-weight:600;">أبرز الفوائد (${s.benefits.length}):</p><ol>`;
     s.benefits.forEach(b => inner += `<li>${escapeHTML(b)}</li>`);
@@ -402,7 +673,6 @@ function clearLibrary() {
     setLibrary([]); renderLibrary();
   }
 }
-
 
 /* ---------- البطاقات ---------- */
 function getCards() { return JSON.parse(localStorage.getItem("khulasa_cards") || "[]"); }
@@ -467,8 +737,9 @@ function deleteCard() {
   renderDeck();
 }
 
-
 /* ---------- التهيئة ---------- */
+const savedKey = localStorage.getItem("khulasa_api_key");
+if (savedKey) document.getElementById("ai-key").value = savedKey;
 renderLibrary();
 renderDeck();
 </script>
